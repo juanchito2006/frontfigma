@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "./ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge"
@@ -300,37 +300,67 @@ const usuariosDB: any[] = [
 
 interface UserProfileViewProps {
   userId: number
-  onBack: () => void
+  onNavigateBack: () => void
   onNavigateToEdit?: (userId: number) => void
 }
 
-export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfileViewProps) {
-  // Buscar el usuario por ID
-  const user = usuariosDB.find(u => u.id === userId)
+export function UserProfileView({ userId, onNavigateBack, onNavigateToEdit }: UserProfileViewProps) {
+  const [usuario, setUsuario] = useState<any>(null)
+  const [loading, setLoading] = useState(true)
   
-  if (!user) {
+  useEffect(() => {
+    loadUsuario()
+  }, [userId])
+
+  const loadUsuario = async () => {
+    setLoading(true)
+    try {
+      // TODO: Aquí se conectará con la API del backend
+      // const response = await fetch(`/api/usuarios/${userId}`)
+      // const data = await response.json()
+      // setUsuario(data)
+      
+      // Por ahora, datos vacíos
+      setUsuario(null)
+    } catch (error) {
+      console.error('Error cargando usuario:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
     return (
       <div className="p-6">
-        <div className="mb-6 flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Volver
-          </Button>
-          <h1 className="text-2xl font-semibold text-gray-800">Usuario no encontrado</h1>
+        <div className="text-center py-8 text-gray-500">
+          Cargando información del usuario...
         </div>
-        <Card className="rounded-xl">
-          <CardContent className="p-6 text-center">
-            <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-            <p className="text-gray-500">El usuario solicitado no existe o ha sido eliminado.</p>
+      </div>
+    )
+  }
+
+  if (!usuario) {
+    return (
+      <div className="p-6">
+        <Button
+          variant="ghost"
+          onClick={onNavigateBack}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver
+        </Button>
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center text-gray-500">
+              Usuario no encontrado
+            </div>
           </CardContent>
         </Card>
       </div>
     )
   }
+
   // Simular valoraciones del usuario basadas en su información
   const userValoraciones = [
     {
@@ -383,7 +413,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={onBack}
+            onClick={onNavigateBack}
             className="flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -420,7 +450,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Nombre Completo</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.nombres} {user.apellidos}
+                    {usuario.nombres} {usuario.apellidos}
                   </div>
                 </div>
                 <div>
@@ -429,7 +459,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Documento</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.tipoDocumento}: {user.documento}
+                    {usuario.tipoDocumento}: {usuario.documento}
                   </div>
                 </div>
                 <div>
@@ -438,7 +468,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Fecha de Nacimiento</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.fechaNacimiento || 'No especificada'}
+                    {usuario.fechaNacimiento || 'No especificada'}
                   </div>
                 </div>
               </div>
@@ -450,7 +480,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Email</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.email}
+                    {usuario.email}
                   </div>
                 </div>
                 <div>
@@ -459,7 +489,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Teléfono</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.telefono || 'No especificado'}
+                    {usuario.telefono || 'No especificado'}
                   </div>
                 </div>
                 <div>
@@ -468,7 +498,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Sexo</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.sexo || 'No especificado'}
+                    {usuario.sexo || 'No especificado'}
                   </div>
                 </div>
               </div>
@@ -480,7 +510,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">Dirección</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.direccion || 'No especificada'}
+                    {usuario.direccion || 'No especificada'}
                   </div>
                 </div>
                 <div>
@@ -489,7 +519,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                     <span className="text-sm font-medium text-gray-600">EPS</span>
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
-                    {user.eps || 'No especificada'}
+                    {usuario.eps || 'No especificada'}
                   </div>
                 </div>
                 <div>
@@ -499,7 +529,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
                   </div>
                   <div className="p-3 bg-gray-50 rounded-xl">
                     <Badge className="bg-green-100 text-green-800">
-                      {user.rol || 'Usuario'}
+                      {usuario.rol || 'Usuario'}
                     </Badge>
                   </div>
                 </div>
@@ -510,11 +540,11 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <span className="text-sm font-medium text-gray-600">Ocupación:</span>
-                  <span className="ml-2 text-gray-800">{user.ocupacion || 'No especificada'}</span>
+                  <span className="ml-2 text-gray-800">{usuario.ocupacion || 'No especificada'}</span>
                 </div>
                 <div>
                   <span className="text-sm font-medium text-gray-600">Fecha de registro:</span>
-                  <span className="ml-2 text-gray-800">{user.fechaCreacion}</span>
+                  <span className="ml-2 text-gray-800">{usuario.fechaCreacion}</span>
                 </div>
               </div>
             </div>
@@ -658,7 +688,7 @@ export function UserProfileView({ userId, onBack, onNavigateToEdit }: UserProfil
           <Card className="rounded-xl">
             <CardContent className="p-6 text-center">
               <div className="text-3xl font-bold text-purple-700 mb-2">
-                {Math.round((new Date().getTime() - new Date(user.fechaCreacion).getTime()) / (1000 * 60 * 60 * 24))}
+                {Math.round((new Date().getTime() - new Date(usuario.fechaCreacion).getTime()) / (1000 * 60 * 60 * 24))}
               </div>
               <div className="text-sm text-gray-600">Días como Usuario</div>
             </CardContent>

@@ -74,8 +74,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   /**
-   * Maneja el cambio de s
-    if (route) {ección navegando a la ruta correspondiente
+   * Maneja el cambio de sección navegando a la ruta correspondiente
    * Convierte el ID de sección a una ruta y navega usando React Router
    * 
    * @param sectionId - ID de la sección a la que navegar
@@ -93,6 +92,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     <div className="flex flex-col h-screen">
       {/* Header superior con logo y menú de usuario */}
       <DashboardHeader currentPage={activeSection} />
+      
       {/* Contenedor flex para sidebar y contenido principal */}
       <div className="flex flex-1 overflow-hidden">
         {/* 
@@ -103,6 +103,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           activeSection={activeSection}
           onSectionChange={handleSectionChange}
         />
+        
         {/* 
           Área de contenido principal con scroll
           El contenido viene de AppRoutes según la ruta activa
@@ -111,6 +112,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+      
       {/* Componente de notificaciones toast */}
       <Toaster />
     </div>

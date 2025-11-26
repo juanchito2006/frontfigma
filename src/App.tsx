@@ -69,7 +69,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        {/* <ValoracionProvider */}
+        <ValoracionProvider>
           <AppContent />
         </ValoracionProvider>
       </AuthProvider>
