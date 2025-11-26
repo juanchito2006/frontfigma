@@ -40,7 +40,7 @@ export function ClientesCrear() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     // Validar campos requeridos
     if (!formData.nombres || !formData.apellidos || !formData.email || !formData.documento) {
       toast.error("Por favor complete los campos obligatorios")
@@ -54,7 +54,7 @@ export function ClientesCrear() {
       //   headers: { 'Content-Type': 'application/json' },
       //   body: JSON.stringify(formData)
       // })
-      
+
       toast.success("Cliente creado exitosamente")
       navigate('/clientes/ver')
     } catch (error) {

@@ -1,54 +1,54 @@
-/**
- * ClientesVer - Página para ver la lista de clientes
- * 
- * Muestra la tabla de clientes con búsqueda y opciones de acción.
- * Los datos se obtendrán de la API del backend personalizado.
- */
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Badge } from "../components/ui/badge"
-import { Search, Plus, Eye, Edit } from "lucide-react"
+import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react"
+import { useList, useDelete } from "../hooks/useGenericCrud"
+import type { Usuario } from "../types/schema.types"
+import { toast } from "sonner"
 
 export function ClientesVer() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
-  const [clientes, setClientes] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
 
-  // Cargar clientes desde la API
-  useEffect(() => {
-    loadClientes()
-  }, [])
-
-  const loadClientes = async () => {
-    setLoading(true)
-    try {
-      // TODO: Aquí se conectará con la API del backend
-      // const response = await fetch('/api/clientes')
-      // const data = await response.json()
-      // setClientes(data)
-      
-      // Por ahora, datos vacíos
-      setClientes([])
-    } catch (error) {
-      console.error('Error cargando clientes:', error)
-    } finally {
-      setLoading(false)
+  // Usar el hook genérico para obtener usuarios
+  const {
+    data: usuarios,
+    isLoading,
+    error
+  } = useList<Usuario>({
+    resourceName: 'usuarios',
+    queryOptions: {
+      staleTime: .2 * 60 * 1000, // 5 minutos
     }
-  }
+  })
+
+  const deleteMutation = useDelete('usuarios')
 
   // Filtrar clientes por búsqueda
-  const filteredClientes = clientes.filter(cliente =>
-    cliente.nombres?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.apellidos?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cliente.documento?.includes(searchTerm) ||
-    cliente.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredClientes = usuarios?.filter(usuario =>
+    usuario.usu_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    usuario.usu_apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    usuario.usu_di?.toString().includes(searchTerm) ||
+    usuario.usu_email?.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || []
+
+  const handleDelete = (id: number) => {
+    if (window.confirm('¿Está seguro de eliminar este cliente?')) {
+      deleteMutation.mutate(id, {
+        onSuccess: () => {
+          toast.success('Cliente eliminado exitosamente')
+        },
+        onError: (error) => {
+          toast.error(`Error al eliminar: ${error.message}`)
+        }
+      })
+    }
+  }
 
   return (
     <div className="p-6">
@@ -89,8 +89,14 @@ export function ClientesVer() {
             </div>
           </div>
 
-          {/* Tabla */}
-          {loading ? (
+          {/* Estados de carga y error */}
+          {error && (
+            <div className="text-center py-8 text-red-500">
+              Error al cargar clientes: {error.message}
+            </div>
+          )}
+
+          {isLoading ? (
             <div className="text-center py-8 text-gray-500">
               Cargando clientes...
             </div>
@@ -107,41 +113,50 @@ export function ClientesVer() {
                     <TableHead>Documento</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Teléfono</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Fecha de Creación</TableHead>
+                    <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredClientes.map((cliente) => (
-                    <TableRow key={cliente.id}>
+                    <TableRow key={cliente.usu_di}>
                       <TableCell>
-                        {cliente.nombres} {cliente.apellidos}
+                        {cliente.usu_nombre} {cliente.usu_apellido}
                       </TableCell>
-                      <TableCell>{cliente.documento}</TableCell>
-                      <TableCell>{cliente.email}</TableCell>
-                      <TableCell>{cliente.telefono}</TableCell>
+                      <TableCell>{cliente.usu_di}</TableCell>
+                      <TableCell>{cliente.usu_email}</TableCell>
+                      <TableCell>{cliente.usu_telefono}</TableCell>
                       <TableCell>
-                        <Badge variant={cliente.rol === 'Administrador' ? 'default' : 'secondary'}>
-                          {cliente.rol}
+                        <Badge variant={cliente.usu_status ? 'default' : 'secondary'}>
+                          {cliente.usu_status ? 'Activo' : 'Inactivo'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{cliente.fechaCreacion}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/clientes/${cliente.id}`)}
+                            onClick={() => navigate(`/clientes/${cliente.usu_di}`)}
+                            title="Ver detalles"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
+                            onClick={() => navigate(`/clientes/${cliente.usu_di}/editar`)}
+                            title="Editar"
                           >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(cliente.usu_di)}
+                            disabled={deleteMutation.isPending}
+                            title="Eliminar"
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>
                         </div>
                       </TableCell>
@@ -156,3 +171,4 @@ export function ClientesVer() {
     </div>
   )
 }
+
