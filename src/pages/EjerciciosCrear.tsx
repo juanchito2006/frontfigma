@@ -1,10 +1,3 @@
-/**
- * EjerciciosCrear - Página para crear un nuevo ejercicio
- * 
- * Formulario completo para la creación de ejercicios con carga de archivos multimedia.
- * Los datos se enviarán a la API del backend personalizado.
- */
-
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -14,11 +7,24 @@ import { Label } from "../components/ui/label"
 import { Textarea } from "../components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
 import { toast } from "sonner"
-import { ArrowLeft, Upload, FileImage, FileVideo, X } from "lucide-react"
+import { ArrowLeft, Upload, FileImage, FileVideo, X, Loader2 } from "lucide-react"
+import { useCreateEjercicio } from "../hooks/useEjercicios"
+import type { CreateEjercicioDTO, NivelEnum } from "../types/schema.types"
+
+interface EjercicioFormData {
+  nombre: string;
+  descripcion: string;
+  ejemplo: string;
+  categoria: string;
+  dificultad: NivelEnum | '';
+  duracion: string;
+}
 
 export function EjerciciosCrear() {
   const navigate = useNavigate()
-  const [formData, setFormData] = useState({
+  const createMutation = useCreateEjercicio()
+
+  const [formData, setFormData] = useState<EjercicioFormData>({
     nombre: '',
     descripcion: '',
     ejemplo: '',
@@ -29,7 +35,7 @@ export function EjerciciosCrear() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof EjercicioFormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
@@ -37,8 +43,7 @@ export function EjerciciosCrear() {
     const file = e.target.files?.[0]
     if (file) {
       setSelectedFile(file)
-      
-      // Crear preview
+
       const reader = new FileReader()
       reader.onloadend = () => {
         setFilePreview(reader.result as string)
@@ -54,30 +59,25 @@ export function EjerciciosCrear() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!formData.nombre || !formData.categoria || !formData.dificultad) {
+
+    if (!formData.nombre || !formData.dificultad) {
       toast.error("Por favor complete los campos obligatorios")
       return
     }
 
     try {
-      // TODO: Aquí se conectará con la API del backend
-      // const formDataToSend = new FormData()
-      // Object.entries(formData).forEach(([key, value]) => {
-      //   formDataToSend.append(key, value)
-      // })
-      // if (selectedFile) {
-      //   formDataToSend.append('archivo', selectedFile)
-      // }
-      // 
-      // const response = await fetch('/api/ejercicios', {
-      //   method: 'POST',
-      //   body: formDataToSend
-      // })
-      
+      const ejercicioData: CreateEjercicioDTO = {
+        eje_nombre: formData.nombre,
+        eje_descripcion: formData.descripcion || formData.ejemplo,
+        eje_nivel: formData.dificultad,
+        eje_imagen: selectedFile ? URL.createObjectURL(selectedFile) : null,
+      }
+
+      await createMutation.mutateAsync(ejercicioData)
       toast.success("Ejercicio creado exitosamente")
       navigate('/ejercicios/ver')
     } catch (error) {
+      console.error('Error creando ejercicio:', error)
       toast.error("Error al crear el ejercicio")
     }
   }
@@ -91,11 +91,12 @@ export function EjerciciosCrear() {
           variant="ghost"
           onClick={() => navigate('/ejercicios/ver')}
           className="mb-4"
+          disabled={createMutation.isPending}
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Volver a la lista
         </Button>
-        <h1 className="text-green-700">Crear Nuevo Ejercicio</h1>
+        <h1 className="text-2xl font-bold text-green-700">Crear Nuevo Ejercicio</h1>
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -114,6 +115,7 @@ export function EjerciciosCrear() {
                 onChange={(e) => handleInputChange('nombre', e.target.value)}
                 placeholder="Ej: Flexiones de brazos"
                 required
+                disabled={createMutation.isPending}
               />
             </div>
 
@@ -125,6 +127,7 @@ export function EjerciciosCrear() {
                 value={formData.descripcion}
                 onChange={(e) => handleInputChange('descripcion', e.target.value)}
                 placeholder="Descripción detallada del ejercicio..."
+                disabled={createMutation.isPending}
               />
             </div>
 
@@ -136,43 +139,25 @@ export function EjerciciosCrear() {
                 value={formData.ejemplo}
                 onChange={(e) => handleInputChange('ejemplo', e.target.value)}
                 placeholder="Paso a paso de cómo realizar el ejercicio..."
+                disabled={createMutation.isPending}
               />
             </div>
 
-            {/* Categorización */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="categoria">Categoría *</Label>
-                <Select
-                  value={formData.categoria}
-                  onValueChange={(value) => handleInputChange('categoria', value)}
-                >
-                  <SelectTrigger id="categoria">
-                    <SelectValue placeholder="Seleccione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Fuerza">Fuerza</SelectItem>
-                    <SelectItem value="Cardio">Cardio</SelectItem>
-                    <SelectItem value="Flexibilidad">Flexibilidad</SelectItem>
-                    <SelectItem value="Resistencia">Resistencia</SelectItem>
-                    <SelectItem value="Equilibrio">Equilibrio</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="dificultad">Dificultad *</Label>
                 <Select
                   value={formData.dificultad}
-                  onValueChange={(value) => handleInputChange('dificultad', value)}
+                  onValueChange={(value: NivelEnum) => handleInputChange('dificultad', value)}
+                  disabled={createMutation.isPending}
                 >
                   <SelectTrigger id="dificultad">
                     <SelectValue placeholder="Seleccione" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Principiante">Principiante</SelectItem>
-                    <SelectItem value="Intermedio">Intermedio</SelectItem>
-                    <SelectItem value="Avanzado">Avanzado</SelectItem>
+                    <SelectItem value={NivelEnum.Principiante}>Principiante</SelectItem>
+                    <SelectItem value={NivelEnum.Intermedio}>Intermedio</SelectItem>
+                    <SelectItem value={NivelEnum.Avanzado}>Avanzado</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -186,14 +171,14 @@ export function EjerciciosCrear() {
                   value={formData.duracion}
                   onChange={(e) => handleInputChange('duracion', e.target.value)}
                   placeholder="Ej: 15"
+                  disabled={createMutation.isPending}
                 />
               </div>
             </div>
 
-            {/* Carga de archivo */}
             <div className="space-y-2">
               <Label>Archivo de Ejemplo (Imagen o Video)</Label>
-              
+
               {!selectedFile ? (
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-gray-400 transition-colors">
                   <label htmlFor="fileInput" className="cursor-pointer flex flex-col items-center">
@@ -211,6 +196,7 @@ export function EjerciciosCrear() {
                     accept="image/*,video/*"
                     onChange={handleFileChange}
                     className="hidden"
+                    disabled={createMutation.isPending}
                   />
                 </div>
               ) : (
@@ -234,11 +220,12 @@ export function EjerciciosCrear() {
                       variant="ghost"
                       size="sm"
                       onClick={removeFile}
+                      disabled={createMutation.isPending}
                     >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  
+
                   {/* Preview */}
                   {filePreview && (
                     <div className="mt-3">
@@ -262,13 +249,25 @@ export function EjerciciosCrear() {
             </div>
 
             <div className="flex gap-3 pt-4">
-              <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                Crear Ejercicio
+              <Button
+                type="submit"
+                className="bg-green-600 hover:bg-green-700"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Creando...
+                  </>
+                ) : (
+                  'Crear Ejercicio'
+                )}
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => navigate('/ejercicios/ver')}
+                disabled={createMutation.isPending}
               >
                 Cancelar
               </Button>
