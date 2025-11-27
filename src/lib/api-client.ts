@@ -58,5 +58,5 @@ export class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient('https://gym-combarranquilla-1.onrender.com');
+export const apiClient = new ApiClient('https://gym-combarranquilla-2.onrender.com');
 

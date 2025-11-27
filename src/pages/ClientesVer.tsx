@@ -1,12 +1,11 @@
-
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Badge } from "../components/ui/badge"
-import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react"
+import { Search, Plus, Eye, Edit, Trash2, Loader2 } from "lucide-react"
 import { useList, useDelete } from "../hooks/useGenericCrud"
 import type { Usuario } from "../types/schema.types"
 import { toast } from "sonner"
@@ -14,28 +13,44 @@ import { toast } from "sonner"
 export function ClientesVer() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
 
-  // Usar el hook genérico para obtener usuarios
+  // Debounce para evitar muchas llamadas a la API
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 300) // 300ms de debounce
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  const shouldFetch = debouncedSearchTerm.length >= 3
+
   const {
     data: usuarios,
     isLoading,
-    error
+    error,
+    isFetching
   } = useList<Usuario>({
-    resourceName: 'usuarios',
+    resourceName: 'usuario',
     queryOptions: {
-      staleTime: .2 * 60 * 1000, // 5 minutos
+      staleTime: 5 * 60 * 1000, // 5 min
+      enabled: shouldFetch,
     }
   })
 
-  const deleteMutation = useDelete('usuarios')
+  const deleteMutation = useDelete('usuario')
 
-  // Filtrar clientes por búsqueda
-  const filteredClientes = usuarios?.filter(usuario =>
-    usuario.usu_nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    usuario.usu_apellido?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    usuario.usu_di?.toString().includes(searchTerm) ||
-    usuario.usu_email?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || []
+  const filteredClientes = useMemo(() => {
+    if (!usuarios) return []
+
+    return usuarios.filter(usuario =>
+      usuario.usu_nombre?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      usuario.usu_apellido?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+      usuario.usu_di?.toString().includes(debouncedSearchTerm) ||
+      usuario.usu_email?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    )
+  }, [usuarios, debouncedSearchTerm])
 
   const handleDelete = (id: number) => {
     if (window.confirm('¿Está seguro de eliminar este cliente?')) {
@@ -48,6 +63,30 @@ export function ClientesVer() {
         }
       })
     }
+  }
+
+  const getStatusMessage = () => {
+    if (isLoading || isFetching) {
+      return "Cargando clientes..."
+    }
+
+    if (error) {
+      return `Error al cargar clientes: ${error.message}`
+    }
+
+    if (!shouldFetch && debouncedSearchTerm.length > 0) {
+      return "Ingrese al menos 3 caracteres para buscar"
+    }
+
+    if (!shouldFetch) {
+      return "Ingrese un término de búsqueda para ver los clientes"
+    }
+
+    if (filteredClientes.length === 0) {
+      return "No se encontraron clientes"
+    }
+
+    return null
   }
 
   return (
@@ -63,7 +102,7 @@ export function ClientesVer() {
             <div>
               <CardTitle>Lista de Clientes</CardTitle>
               <CardDescription>
-                {filteredClientes.length} cliente(s) registrado(s)
+                {shouldFetch ? `${filteredClientes.length} cliente(s) encontrado(s)` : "Busque clientes por nombre, documento o email"}
               </CardDescription>
             </div>
             <Button
@@ -81,30 +120,36 @@ export function ClientesVer() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Buscar por nombre, documento o email..."
+                placeholder="Buscar por nombre, documento o email... (mín. 3 caracteres)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
+            {searchTerm.length > 0 && searchTerm.length < 3 && (
+              <p className="text-sm text-amber-600 mt-2">
+                Ingrese al menos 3 caracteres para buscar
+              </p>
+            )}
           </div>
 
-          {/* Estados de carga y error */}
-          {error && (
-            <div className="text-center py-8 text-red-500">
-              Error al cargar clientes: {error.message}
+          {getStatusMessage() && (
+            <div className={`text-center py-8 ${error ? 'text-red-500' :
+              (isLoading || isFetching) ? 'text-gray-500' :
+                'text-gray-500'
+              }`}>
+              {(isLoading || isFetching) ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {getStatusMessage()}
+                </div>
+              ) : (
+                getStatusMessage()
+              )}
             </div>
           )}
 
-          {isLoading ? (
-            <div className="text-center py-8 text-gray-500">
-              Cargando clientes...
-            </div>
-          ) : filteredClientes.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              {searchTerm ? 'No se encontraron clientes' : 'No hay clientes registrados'}
-            </div>
-          ) : (
+          {shouldFetch && filteredClientes.length > 0 && (
             <div className="border rounded-md">
               <Table>
                 <TableHeader>
@@ -156,7 +201,11 @@ export function ClientesVer() {
                             disabled={deleteMutation.isPending}
                             title="Eliminar"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            {deleteMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            )}
                           </Button>
                         </div>
                       </TableCell>
@@ -171,4 +220,3 @@ export function ClientesVer() {
     </div>
   )
 }
-

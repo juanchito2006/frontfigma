@@ -1,3 +1,7 @@
+/**
+ * EjerciciosVer - Página para ver la lista de ejercicios
+ */
+
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
@@ -19,9 +23,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { toast } from "sonner"
 import { Search, Plus, Edit, Trash2, FileImage, FileVideo, Loader2 } from "lucide-react"
 import { useEjerciciosList, useDeleteEjercicio } from "../hooks/useEjercicios"
-import type { Ejercicio, NivelEnum } from "../types/schema.types"
+import type { Ejercicio } from "../types/schema.types"
 
-// Tipo local para el formulario (si necesitas mapeo de campos)
+import { NivelEnum } from "../types/schema.types"
+
+type DificultadFilter = NivelEnum | 'todas'
+
 interface EjercicioFormData {
   nombre: string;
   descripcion: string;
@@ -34,7 +41,7 @@ interface EjercicioFormData {
 export function EjerciciosVer() {
   const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
-  const [dificultadFilter, setDificultadFilter] = useState<NivelEnum | 'todas'>('todas')
+  const [dificultadFilter, setDificultadFilter] = useState<DificultadFilter>('todas')
   const [deleteDialog, setDeleteDialog] = useState({
     isOpen: false,
     ejercicioId: null as number | null,
@@ -81,6 +88,13 @@ export function EjerciciosVer() {
     // TODO: Implementar navegación a página de edición
     navigate(`/ejercicios/editar/${ejercicio.eje_id}`, { state: { ejercicio } })
   }
+
+  const dificultadOptions = [
+    { value: 'todas', label: 'Todas las dificultades' },
+    { value: NivelEnum.Principiante, label: 'Principiante' },
+    { value: NivelEnum.Intermedio, label: 'Intermedio' },
+    { value: NivelEnum.Avanzado, label: 'Avanzado' },
+  ]
 
   if (error) {
     return (
@@ -130,19 +144,24 @@ export function EjerciciosVer() {
               />
             </div>
 
-            <Select value={dificultadFilter} onValueChange={(value: NivelEnum | 'todas') => setDificultadFilter(value)}>
+            <Select
+              value={dificultadFilter}
+              onValueChange={(value: DificultadFilter) => setDificultadFilter(value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Todas las dificultades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas las dificultades</SelectItem>
-                <SelectItem value={NivelEnum.Principiante}>Principiante</SelectItem>
-                <SelectItem value={NivelEnum.Intermedio}>Intermedio</SelectItem>
-                <SelectItem value={NivelEnum.Avanzado}>Avanzado</SelectItem>
+                {dificultadOptions.map(option => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
             <div className="flex items-center text-sm text-gray-500">
+              {/* Espacio filtros adicionales */}
             </div>
           </div>
 
