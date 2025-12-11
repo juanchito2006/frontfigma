@@ -58,5 +58,5 @@ export class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient('https://gym-combarranquilla-master.onrender.com');
+export const apiClient = new ApiClient('https://gym-combarranquilla-api.leapcell.app');
 
