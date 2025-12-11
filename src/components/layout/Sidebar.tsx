@@ -25,12 +25,12 @@
  */
 
 import { useState } from "react"
-import { 
-  Users, 
-  ClipboardList, 
-  Dumbbell, 
-  Settings, 
-  Shield, 
+import {
+  Users,
+  ClipboardList,
+  Dumbbell,
+  Settings,
+  Shield,
   User,
   ChevronDown,
   ChevronRight,
@@ -67,8 +67,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   // Estado para controlar qué secciones están expandidas
   // Por defecto, expandimos las secciones principales
   const [openSections, setOpenSections] = useState<string[]>([
-    'clientes', 
-    'valoraciones', 
+    'clientes',
+    'valoraciones',
     'ejercicios'
   ])
 
@@ -77,8 +77,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
    * @param section - ID de la sección a expandir/colapsar
    */
   const toggleSection = (section: string) => {
-    setOpenSections(prev => 
-      prev.includes(section) 
+    setOpenSections(prev =>
+      prev.includes(section)
         ? prev.filter(s => s !== section)
         : [...prev, section]
     )
@@ -91,18 +91,18 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
   const menuItems: MenuItem[] = [
     {
       id: 'menu-principal',
-      label: 'Menú Principal',
+      label: 'Dashboard',
       icon: LayoutGrid,
       hasSubmenu: false
     },
     {
       id: 'clientes',
-      label: 'Clientes',
+      label: 'Afiliados',
       icon: Users,
       hasSubmenu: true,
       submenu: [
-        { id: 'crear-cliente', label: 'Crear cliente' },
-        { id: 'ver-clientes', label: 'Ver clientes' }
+        { id: 'crear-cliente', label: 'Crear afiliado' },
+        { id: 'ver-clientes', label: 'Ver afiliados' }
       ]
     },
     {
@@ -177,7 +177,7 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                       <ChevronRight className="h-4 w-4 text-gray-400" />
                     )}
                   </button>
-                  
+
                   {/* 
                     Sub-menú (visible cuando está expandido)
                     Al hacer click en un sub-ítem, navega usando React Router
@@ -188,9 +188,8 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                         <button
                           key={subItem.id}
                           onClick={() => onSectionChange(subItem.id)}
-                          className={`w-full text-left px-3 py-1 text-sm rounded-md hover:bg-gray-100 transition-colors ${
-                            activeSection === subItem.id ? 'bg-gray-100 text-green-700 font-medium' : 'text-gray-600'
-                          }`}
+                          className={`w-full text-left px-3 py-1 text-sm rounded-md hover:bg-gray-100 transition-colors ${activeSection === subItem.id ? 'bg-gray-100 text-green-700 font-medium' : 'text-gray-600'
+                            }`}
                         >
                           {subItem.label}
                         </button>
@@ -202,15 +201,14 @@ export function Sidebar({ activeSection, onSectionChange }: SidebarProps) {
                 // Menú sin sub-elementos (navegación directa con React Router)
                 <button
                   onClick={() => onSectionChange(item.id)}
-                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors ${
-                    activeSection === item.id ? 'bg-gray-100 text-green-700 font-medium' : ''
-                  }`}
+                  className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-md hover:bg-gray-100 transition-colors ${activeSection === item.id ? 'bg-gray-100 text-green-700 font-medium' : ''
+                    }`}
                 >
                   <item.icon className="h-4 w-4 text-gray-600" />
                   <span className="text-gray-700">{item.label}</span>
                 </button>
               )}
-              
+
               {/* Separador visual después de las secciones principales */}
               {(item.id === 'clientes' || item.id === 'valoraciones' || item.id === 'ejercicios') && (
                 <div className="my-3 border-b border-dashed border-gray-300"></div>

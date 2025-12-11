@@ -143,7 +143,7 @@ export function DashboardContent() {
               8
             </div>
             <div className="text-sm text-gray-600 text-center">
-              Nuevos Clientes Este Mes
+              Nuevos Afiliados Este Mes
             </div>
           </CardContent>
         </Card>
@@ -151,7 +151,7 @@ export function DashboardContent() {
         {/* Total de Clientes - clickeable */}
         <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setShowUserStatsModal(true)}>
           <CardHeader>
-            <CardTitle className="text-lg">Total de Clientes</CardTitle>
+            <CardTitle className="text-lg">Total de Afiliados</CardTitle>
             <CardDescription>Distribución por género</CardDescription>
           </CardHeader>
           <CardContent>
@@ -231,7 +231,7 @@ export function DashboardContent() {
         {/* Crecimiento de Clientes */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Crecimiento de Clientes</CardTitle>
+            <CardTitle className="text-lg">Crecimiento de Afiliados</CardTitle>
             <CardDescription>Evolución mensual</CardDescription>
           </CardHeader>
           <CardContent>
@@ -248,7 +248,7 @@ export function DashboardContent() {
                 <YAxis
                   tick={{ fill: "#6B7280", fontSize: 12 }}
                   label={{
-                    value: "Número de clientes",
+                    value: "Número de afiliados",
                     angle: -90,
                     position: "insideLeft",
                     style: { fill: "#6B7280", fontSize: 12 },
@@ -259,7 +259,7 @@ export function DashboardContent() {
                 <Line
                   type="monotone"
                   dataKey="clientes"
-                  name="Clientes acumulados"
+                  name="Afiliados acumulados"
                   stroke="#10B981"
                   strokeWidth={3}
                   dot={{ fill: "#10B981", r: 4 }}
@@ -296,7 +296,7 @@ export function DashboardContent() {
       <Dialog open={showUserStatsModal} onOpenChange={setShowUserStatsModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-center">Detalles de Clientes</DialogTitle>
+            <DialogTitle className="text-center">Detalles de Afiliados</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">

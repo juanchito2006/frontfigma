@@ -89,8 +89,8 @@ export function ClientesCrear() {
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Información del Cliente</CardTitle>
-            <CardDescription>Complete los datos del nuevo cliente</CardDescription>
+            <CardTitle>Información del Afiliado</CardTitle>
+            <CardDescription>Complete los datos del nuevo afiliado</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Información personal */}
@@ -239,7 +239,7 @@ export function ClientesCrear() {
 
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="bg-green-600 hover:bg-green-700">
-                Crear Cliente
+                Crear afiliado
               </Button>
               <Button type="button" variant="outline" onClick={() => navigate("/clientes/ver")}>
                 Cancelar

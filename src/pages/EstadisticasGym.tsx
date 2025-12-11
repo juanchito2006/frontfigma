@@ -79,7 +79,7 @@ export function EstadisticasGym() {
             <CardHeader className="pb-3">
               <CardTitle className="text-sm text-gray-600 flex items-center gap-2">
                 <Users className="h-4 w-4" />
-                Total Usuarios
+                Total Afiliados
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -130,7 +130,7 @@ export function EstadisticasGym() {
             <CardContent>
               <div className="text-gray-900">{stats.condicionFisica.normal.porcentaje}%</div>
               <p className="text-xs text-gray-500 mt-1">
-                {stats.condicionFisica.normal.cantidad} usuarios
+                {stats.condicionFisica.normal.cantidad} afiliados
               </p>
             </CardContent>
           </Card>
@@ -146,7 +146,7 @@ export function EstadisticasGym() {
                 IMC Promedio - Hombres
               </CardTitle>
               <CardDescription>
-                Índice de Masa Corporal promedio en usuarios masculinos
+                Índice de Masa Corporal promedio en afiliados masculinos
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -156,10 +156,10 @@ export function EstadisticasGym() {
                   <p className="text-sm text-gray-600 mt-1">{stats.imcHombres.categoria}</p>
                 </div>
                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {stats.imcHombres.total} usuarios
+                  {stats.imcHombres.total} afiliados
                 </Badge>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Bajo peso (&lt;18.5)</span>
@@ -167,8 +167,8 @@ export function EstadisticasGym() {
                   <span>Sobrepeso (25-29.9)</span>
                   <span>Obesidad (≥30)</span>
                 </div>
-                <Progress 
-                  value={getIMCProgress(stats.imcHombres.promedio)} 
+                <Progress
+                  value={getIMCProgress(stats.imcHombres.promedio)}
                   className="h-3"
                   indicatorClassName={getIMCColor(stats.imcHombres.promedio)}
                 />
@@ -197,7 +197,7 @@ export function EstadisticasGym() {
                 IMC Promedio - Mujeres
               </CardTitle>
               <CardDescription>
-                Índice de Masa Corporal promedio en usuarios femeninos
+                Índice de Masa Corporal promedio en afiliados femeninos
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -207,10 +207,10 @@ export function EstadisticasGym() {
                   <p className="text-sm text-gray-600 mt-1">{stats.imcMujeres.categoria}</p>
                 </div>
                 <Badge variant="outline" className="bg-pink-50 text-pink-700 border-pink-200">
-                  {stats.imcMujeres.total} usuarios
+                  {stats.imcMujeres.total} afiliados
                 </Badge>
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Bajo peso (&lt;18.5)</span>
@@ -218,8 +218,8 @@ export function EstadisticasGym() {
                   <span>Sobrepeso (25-29.9)</span>
                   <span>Obesidad (≥30)</span>
                 </div>
-                <Progress 
-                  value={getIMCProgress(stats.imcMujeres.promedio)} 
+                <Progress
+                  value={getIMCProgress(stats.imcMujeres.promedio)}
                   className="h-3"
                   indicatorClassName={getIMCColor(stats.imcMujeres.promedio)}
                 />
@@ -249,7 +249,7 @@ export function EstadisticasGym() {
               Progreso de Metas
             </CardTitle>
             <CardDescription>
-              Porcentaje de metas alcanzadas por los usuarios del gimnasio
+              Porcentaje de metas alcanzadas por los afiliados del gimnasio
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -261,9 +261,9 @@ export function EstadisticasGym() {
                 </p>
               </div>
             </div>
-            
-            <Progress 
-              value={stats.metasCumplidas} 
+
+            <Progress
+              value={stats.metasCumplidas}
               className="h-4"
               indicatorClassName="bg-green-600"
             />
@@ -293,7 +293,7 @@ export function EstadisticasGym() {
               Distribución por Condición Física
             </CardTitle>
             <CardDescription>
-              Cantidad de usuarios según su índice de masa corporal
+              Cantidad de afiliados según su índice de masa corporal
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -309,15 +309,15 @@ export function EstadisticasGym() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">
-                      {stats.condicionFisica.bajoPeso.cantidad} usuarios
+                      {stats.condicionFisica.bajoPeso.cantidad} afiliados
                     </span>
                     <span className="text-sm text-gray-900">
                       {stats.condicionFisica.bajoPeso.porcentaje}%
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={stats.condicionFisica.bajoPeso.porcentaje} 
+                <Progress
+                  value={stats.condicionFisica.bajoPeso.porcentaje}
                   className="h-2"
                   indicatorClassName="bg-blue-500"
                 />
@@ -334,15 +334,15 @@ export function EstadisticasGym() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">
-                      {stats.condicionFisica.normal.cantidad} usuarios
+                      {stats.condicionFisica.normal.cantidad} afiliados
                     </span>
                     <span className="text-sm text-gray-900">
                       {stats.condicionFisica.normal.porcentaje}%
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={stats.condicionFisica.normal.porcentaje} 
+                <Progress
+                  value={stats.condicionFisica.normal.porcentaje}
                   className="h-2"
                   indicatorClassName="bg-green-500"
                 />
@@ -359,15 +359,15 @@ export function EstadisticasGym() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">
-                      {stats.condicionFisica.sobrepeso.cantidad} usuarios
+                      {stats.condicionFisica.sobrepeso.cantidad} afiliados
                     </span>
                     <span className="text-sm text-gray-900">
                       {stats.condicionFisica.sobrepeso.porcentaje}%
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={stats.condicionFisica.sobrepeso.porcentaje} 
+                <Progress
+                  value={stats.condicionFisica.sobrepeso.porcentaje}
                   className="h-2"
                   indicatorClassName="bg-yellow-500"
                 />
@@ -384,15 +384,15 @@ export function EstadisticasGym() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-sm text-gray-600">
-                      {stats.condicionFisica.obesidad.cantidad} usuarios
+                      {stats.condicionFisica.obesidad.cantidad} afiliados
                     </span>
                     <span className="text-sm text-gray-900">
                       {stats.condicionFisica.obesidad.porcentaje}%
                     </span>
                   </div>
                 </div>
-                <Progress 
-                  value={stats.condicionFisica.obesidad.porcentaje} 
+                <Progress
+                  value={stats.condicionFisica.obesidad.porcentaje}
                   className="h-2"
                   indicatorClassName="bg-red-500"
                 />
