@@ -54,9 +54,13 @@ export class ApiClient {
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
+    return this.request<T>(
+      endpoint, {
+      method: 'DELETE'
+    }
+    );
   }
 }
 
-export const apiClient = new ApiClient('https://gym-combarranquilla-master.onrender.com');
+export const apiClient = new ApiClient('https://gym-combarranquilla-api.leapcell.app');
 

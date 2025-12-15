@@ -1,163 +1,177 @@
-/**
- * EjerciciosVer - Página para ver la lista de ejercicios
- * 
- * Muestra la tabla de ejercicios con búsqueda, filtros y opciones de gestión.
- * Los datos se obtendrán de la API del backend personalizado.
- */
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { Badge } from "../components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { toast } from "sonner";
+import { Search, Plus, Edit, Trash2, FileImage } from "lucide-react";
 
-import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
-import { Button } from "../components/ui/button"
-import { Input } from "../components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
-import { Badge } from "../components/ui/badge"
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
-} from "../components/ui/alert-dialog"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select"
-import { toast } from "sonner"
-import { Search, Plus, Edit, Trash2, FileImage, FileVideo } from "lucide-react"
+import { useList, useDelete } from "../hooks/useGenericCrud";
+
+
+
+interface Ejercicio {
+  eje_id: number;
+  eje_nombre: string;
+  eje_descripcion: string;
+  eje_imagen: string;
+  eje_nivel: string;
+}
+
 
 export function EjerciciosVer() {
-  const navigate = useNavigate()
-  const [searchTerm, setSearchTerm] = useState('')
-  const [categoriaFilter, setCategoriaFilter] = useState('todas')
-  const [dificultadFilter, setDificultadFilter] = useState('todas')
-  const [ejercicios, setEjercicios] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
-  const [deleteDialog, setDeleteDialog] = useState({
+  const navigate = useNavigate();
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dificultadFilter, setDificultadFilter] = useState("todas");
+
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    ejercicioId: number | null;
+    ejercicioNombre: string;
+  }>({
     isOpen: false,
-    ejercicioId: null as number | null,
-    ejercicioNombre: ''
-  })
+    ejercicioId: null,
+    ejercicioNombre: "",
+  });
 
-  // Cargar ejercicios desde la API
-  useEffect(() => {
-    loadEjercicios()
-  }, [])
 
-  const loadEjercicios = async () => {
-    setLoading(true)
-    try {
-      // TODO: Aquí se conectará con la API del backend
-      // const response = await fetch('/api/ejercicios')
-      // const data = await response.json()
-      // setEjercicios(data)
-      
-      // Por ahora, datos vacíos
-      setEjercicios([])
-    } catch (error) {
-      console.error('Error cargando ejercicios:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
-  const handleDelete = async (ejercicioId: number) => {
-    try {
-      // TODO: Aquí se conectará con la API del backend
-      // await fetch(`/api/ejercicios/${ejercicioId}`, {
-      //   method: 'DELETE'
-      // })
-      
-      setEjercicios(prev => prev.filter(e => e.id !== ejercicioId))
-      toast.success("Ejercicio eliminado exitosamente")
-    } catch (error) {
-      toast.error("Error al eliminar el ejercicio")
-    } finally {
-      setDeleteDialog({ isOpen: false, ejercicioId: null, ejercicioNombre: '' })
-    }
-  }
+  const shouldFetch = searchTerm.trim().length >= 3;
 
-  // Filtrar ejercicios
-  const filteredEjercicios = ejercicios.filter(ejercicio => {
-    const matchesSearch = ejercicio.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ejercicio.descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategoria = categoriaFilter === 'todas' || ejercicio.categoria === categoriaFilter
-    const matchesDificultad = dificultadFilter === 'todas' || ejercicio.dificultad === dificultadFilter
-    
-    return matchesSearch && matchesCategoria && matchesDificultad
-  })
+  const {
+    data: ejercicios = [],
+    isLoading,
+    error,
+  } = useList<Ejercicio>({
+    resourceName: "ejercicio",
+    queryOptions: {
+      enabled: shouldFetch,
+    },
+  });
 
-  const getDificultadBadgeVariant = (dificultad: string) => {
-    switch (dificultad) {
-      case 'Principiante':
-        return 'default'
-      case 'Intermedio':
-        return 'secondary'
-      case 'Avanzado':
-        return 'destructive'
+
+  const deleteMutation = useDelete("ejercicio");
+
+  const handleDelete = (id: number) => {
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success("Ejercicio eliminado correctamente");
+        setDeleteDialog({
+          isOpen: false,
+          ejercicioId: null,
+          ejercicioNombre: "",
+        });
+      },
+      onError: () => {
+        toast.error("No se pudo eliminar el ejercicio");
+      },
+    });
+  };
+
+
+
+  const filteredEjercicios = ejercicios.filter((ej) => {
+    const matchesSearch =
+      ej.eje_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ej.eje_descripcion.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesNivel =
+      dificultadFilter === "todas" || ej.eje_nivel === dificultadFilter;
+
+    return matchesSearch && matchesNivel;
+  });
+
+  const badgeVariant = (nivel: string) => {
+    switch (nivel) {
+      case "Principiante":
+        return "default";
+      case "Intermedio":
+        return "secondary";
+      case "Avanzado":
+        return "destructive";
       default:
-        return 'default'
+        return "default";
     }
-  }
+  };
+
+
 
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-green-700 mb-2">Ejercicios</h1>
-        <p className="text-gray-600">Gestión de ejercicios del sistema</p>
-      </div>
-
       <Card>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:justify-between gap-4">
             <div>
-              <CardTitle>Lista de Ejercicios</CardTitle>
+              <CardTitle>Ejercicios</CardTitle>
               <CardDescription>
-                {filteredEjercicios.length} ejercicio(s) disponible(s)
+                Busca un ejercicio para visualizar resultados
               </CardDescription>
             </div>
+
             <Button
-              onClick={() => navigate('/ejercicios/crear')}
               className="bg-green-600 hover:bg-green-700"
+              onClick={() => navigate("/ejercicios/crear")}
             >
               <Plus className="h-4 w-4 mr-2" />
               Nuevo Ejercicio
             </Button>
           </div>
         </CardHeader>
+
         <CardContent>
-          {/* Búsqueda y filtros */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div className="relative md:col-span-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          {/* BUSCADOR */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div className="relative">
               <Input
-                placeholder="Buscar ejercicios..."
+                placeholder="Buscar (mínimo 3 caracteres)..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+                className="pl-9"
               />
             </div>
-            
-            <Select value={categoriaFilter} onValueChange={setCategoriaFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todas las categorías" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todas">Todas las categorías</SelectItem>
-                <SelectItem value="Fuerza">Fuerza</SelectItem>
-                <SelectItem value="Cardio">Cardio</SelectItem>
-                <SelectItem value="Flexibilidad">Flexibilidad</SelectItem>
-                <SelectItem value="Resistencia">Resistencia</SelectItem>
-                <SelectItem value="Equilibrio">Equilibrio</SelectItem>
-              </SelectContent>
-            </Select>
 
-            <Select value={dificultadFilter} onValueChange={setDificultadFilter}>
+            <Select
+              value={dificultadFilter}
+              onValueChange={setDificultadFilter}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Todas las dificultades" />
+                <SelectValue placeholder="Nivel" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas las dificultades</SelectItem>
+                <SelectItem value="todas">Todos</SelectItem>
                 <SelectItem value="Principiante">Principiante</SelectItem>
                 <SelectItem value="Intermedio">Intermedio</SelectItem>
                 <SelectItem value="Avanzado">Avanzado</SelectItem>
@@ -165,122 +179,142 @@ export function EjerciciosVer() {
             </Select>
           </div>
 
-          {/* Tabla */}
-          {loading ? (
-            <div className="text-center py-8 text-gray-500">
-              Cargando ejercicios...
+          {/* ESTADOS */}
+          {!shouldFetch && (
+            <div className="text-center text-gray-500 py-10">
+              Escribe al menos 3 caracteres para buscar ejercicios
             </div>
-          ) : filteredEjercicios.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              {searchTerm || categoriaFilter !== 'todas' || dificultadFilter !== 'todas' 
-                ? 'No se encontraron ejercicios con los filtros aplicados' 
-                : 'No hay ejercicios registrados'}
+          )}
+
+          {shouldFetch && isLoading && (
+            <div className="text-center py-10 text-gray-500">
+              Buscando ejercicios...
             </div>
-          ) : (
-            <div className="border rounded-md">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Dificultad</TableHead>
-                    <TableHead>Duración</TableHead>
-                    <TableHead>Multimedia</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+          )}
+
+          {shouldFetch && error && (
+            <div className="text-center py-10 text-red-500">
+              Error al cargar ejercicios
+            </div>
+          )}
+
+          {shouldFetch && filteredEjercicios.length === 0 && (
+            <div className="text-center py-10 text-gray-500">
+              No se encontraron resultados
+            </div>
+          )}
+
+          {shouldFetch && filteredEjercicios.length > 0 && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Imagen</TableHead>
+                  <TableHead>Nombre</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead>Nivel</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {filteredEjercicios.map((ej) => (
+                  <TableRow key={ej.eje_id}>
+                    <TableCell>
+                      {ej.eje_imagen ? (
+                        <img
+                          src={ej.eje_imagen}
+                          className="w-20 h-20 object-cover rounded"
+                          onError={(e) =>
+                          (e.currentTarget.src =
+                            "https://via.placeholder.com/80")
+                          }
+                        />
+                      ) : (
+                        <FileImage className="text-gray-400" />
+                      )}
+                    </TableCell>
+
+                    <TableCell>{ej.eje_nombre}</TableCell>
+
+                    <TableCell className="text-sm text-gray-500">
+                      {ej.eje_descripcion}
+                    </TableCell>
+
+                    <TableCell>
+                      <Badge variant={badgeVariant(ej.eje_nivel)}>
+                        {ej.eje_nivel}
+                      </Badge>
+                    </TableCell>
+
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          navigate(`/ejercicios/${ej.eje_id}/editar`)
+                        }
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() =>
+                          setDeleteDialog({
+                            isOpen: true,
+                            ejercicioId: ej.eje_id,
+                            ejercicioNombre: ej.eje_nombre,
+                          })
+                        }
+                      >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredEjercicios.map((ejercicio) => (
-                    <TableRow key={ejercicio.id}>
-                      <TableCell>
-                        <div>
-                          <div>{ejercicio.nombre}</div>
-                          {ejercicio.descripcion && (
-                            <div className="text-xs text-gray-500 truncate max-w-xs">
-                              {ejercicio.descripcion}
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{ejercicio.categoria}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getDificultadBadgeVariant(ejercicio.dificultad)}>
-                          {ejercicio.dificultad}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {ejercicio.duracion ? `${ejercicio.duracion} min` : '-'}
-                      </TableCell>
-                      <TableCell>
-                        {ejercicio.archivoEjemplo && (
-                          ejercicio.archivoEjemplo.esVideo ? (
-                            <FileVideo className="h-4 w-4 text-blue-600" />
-                          ) : (
-                            <FileImage className="h-4 w-4 text-green-600" />
-                          )
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              // TODO: Navegar a página de edición cuando esté implementada
-                              console.log('Editar ejercicio', ejercicio.id)
-                            }}
-                            title="Editar"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setDeleteDialog({
-                              isOpen: true,
-                              ejercicioId: ejercicio.id,
-                              ejercicioNombre: ejercicio.nombre
-                            })}
-                            title="Eliminar"
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      {/* Diálogo de confirmación de eliminación */}
-      <AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) => 
-        !open && setDeleteDialog({ isOpen: false, ejercicioId: null, ejercicioNombre: '' })
-      }>
+      {/* MODAL ELIMINAR */}
+      <AlertDialog
+        open={deleteDialog.isOpen}
+        onOpenChange={(open) =>
+          !open &&
+          setDeleteDialog({
+            isOpen: false,
+            ejercicioId: null,
+            ejercicioNombre: "",
+          })
+        }
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Eliminar ejercicio?</AlertDialogTitle>
             <AlertDialogDescription>
-              ¿Está seguro de que desea eliminar el ejercicio "{deleteDialog.ejercicioNombre}"? 
-              Esta acción no se puede deshacer.
+              Se eliminará <b>{deleteDialog.ejercicioNombre}</b>. Esta acción no
+              se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
+
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => deleteDialog.ejercicioId && handleDelete(deleteDialog.ejercicioId)}
               className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+              onClick={() =>
+                deleteDialog.ejercicioId &&
+                handleDelete(deleteDialog.ejercicioId)
+              }
             >
-              Eliminar
+              {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

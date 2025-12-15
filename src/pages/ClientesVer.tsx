@@ -9,11 +9,26 @@ import { Search, Plus, Eye, Edit, Trash2 } from "lucide-react"
 import { useList, useDelete } from "../hooks/useGenericCrud"
 import type { Usuario } from "../types/schema.types"
 import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from "../components/ui/alert-dialog"
 
 export function ClientesVer() {
   const navigate = useNavigate()
 
-  const [searchTerm, setSearchTerm] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialog, setDeleteDialog] = useState({
+    isOpen: false,
+    clienteId: null as string | null,
+    clienteNombre: ''
+  });
 
   // Obtener usuarios
   const {
@@ -37,31 +52,35 @@ export function ClientesVer() {
     u.usu_email?.toLowerCase().includes(searchTerm.toLowerCase())
   ) || []
 
+
   const handleDelete = (id: number) => {
-    if (window.confirm("¿Está seguro de eliminar este cliente?")) {
-      deleteMutation.mutate(id, {
-        onSuccess: () => toast.success("Cliente eliminado exitosamente"),
-        onError: (error) => toast.error(`Error al eliminar: ${error.message}`)
-      })
-    }
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success("afiliado eliminado exitosamente")
+        setDeleteDialog({ isOpen: false, clienteId: null, clienteNombre: '' })
+      },
+      onError: (error: any) => {
+        toast.error(`Error al eliminar: ${error.message}`)
+      }
+    })
   }
 
   return (
     <div className="p-6">
       <div className="mb-6">
-        <h1 className="text-green-700 mb-2">Clientes</h1>
-        <p className="text-gray-600">Gestión de clientes del sistema</p>
+        <h1 className="text-green-700 mb-2">Afiliados</h1>
+        <p className="text-gray-600">Gestión de Afiliados del sistema</p>
       </div>
 
       <Card>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <CardTitle>Lista de Clientes</CardTitle>
+              <CardTitle>Lista de Afiliados</CardTitle>
               <CardDescription>
                 {searchTerm.trim() === ""
-                  ? "Escribe para buscar clientes"
-                  : `${filteredClientes.length} cliente(s) encontrado(s)`}
+                  ? "Escribe para buscar afiliados"
+                  : `${filteredClientes.length} afiliado(s) encontrado(s)`}
               </CardDescription>
             </div>
             <Button
@@ -69,7 +88,7 @@ export function ClientesVer() {
               className="bg-green-600 hover:bg-green-700"
             >
               <Plus className="h-4 w-4 mr-2" />
-              Nuevo Cliente
+              Nuevo Afiliado
             </Button>
           </div>
         </CardHeader>
@@ -91,19 +110,19 @@ export function ClientesVer() {
           {/* Manejo de estados */}
           {searchTerm.trim() === "" ? (
             <div className="text-center py-8 text-gray-500">
-              Escribe para buscar clientes...
+              Escribe para buscar afiliados...
             </div>
           ) : isLoading ? (
             <div className="text-center py-8 text-gray-500">
-              Cargando clientes...
+              Cargando afiliados...
             </div>
           ) : error ? (
             <div className="text-center py-8 text-red-500">
-              Error al cargar clientes: {error.message}
+              Error al cargar afiliados: {error.message}
             </div>
           ) : filteredClientes.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              No se encontraron clientes
+              No se encontraron afiliados
             </div>
           ) : (
             <div className="border rounded-md">
@@ -150,17 +169,21 @@ export function ClientesVer() {
                             onClick={() => navigate(`/clientes/${cliente.usu_di}/editar`)}
                             title="Editar"
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="h-4 w-4 text-yellow-500" color="#facc15" />
                           </Button>
 
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(cliente.usu_di)}
+                            onClick={() => setDeleteDialog({
+                              isOpen: true,
+                              clienteId: cliente.usu_di,
+                              clienteNombre: cliente.usu_nombre,
+                            })}
                             disabled={deleteMutation.isPending}
                             title="Eliminar"
                           >
-                            <Trash2 className="h-4 w-4 text-red-500" />
+                            <Trash2 className="h-4 w-4 text-red-500" color="red" />
                           </Button>
                         </div>
                       </TableCell>
@@ -172,6 +195,31 @@ export function ClientesVer() {
           )}
         </CardContent>
       </Card>
+      {/* Diálogo de confirmación de eliminación */}
+      <AlertDialog open={deleteDialog.isOpen} onOpenChange={(open) =>
+        !open && setDeleteDialog({ isOpen: false, ejercicioId: null, ejercicioNombre: '' })
+      }>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar afiliado?</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Está seguro de que desea eliminar el afiliado "{deleteDialog.clienteNombre}"?
+              Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteDialog.clienteId && handleDelete(deleteDialog.clienteId)}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={deleteMutation.isPending}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   )
 }
