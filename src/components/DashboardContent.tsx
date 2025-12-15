@@ -130,10 +130,192 @@ export function DashboardContent() {
   const [showValoracionesModal, setShowValoracionesModal] = useState(false);
 
   return (
+
+
+
     <div className="p-6 bg-gray-50 min-h-full">
-      {/* Middle Section - Charts and Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+
+      {/* ===================== BLOQUE IMC + METAS ===================== */}
+      <div className="space-y-6 mt-8">
+
+
+
+        {/* IMC PROMEDIO */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          {/* IMC HOMBRES */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                IMC Promedio - Hombres
+              </CardTitle>
+              <CardDescription>
+                Índice de Masa Corporal promedio en afiliados masculinos
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-4xl font-bold">24.8</div>
+                  <p className="text-sm text-gray-600">Normal</p>
+                </div>
+                <span className="px-3 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                  28 afiliados
+                </span>
+              </div>
+
+              {/* Barra IMC */}
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full w-[48%] bg-green-500"></div>
+              </div>
+
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Mínimo registrado: <b>19.2</b></span>
+                <span>Máximo registrado: <b>32.5</b></span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* IMC MUJERES */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-sm">
+                IMC Promedio - Mujeres
+              </CardTitle>
+              <CardDescription>
+                Índice de Masa Corporal promedio en afiliados femeninos
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="flex items-end justify-between">
+                <div>
+                  <div className="text-4xl font-bold">23.2</div>
+                  <p className="text-sm text-gray-600">Normal</p>
+                </div>
+                <span className="px-3 py-1 text-xs rounded-full bg-pink-100 text-pink-700">
+                  22 afiliados
+                </span>
+              </div>
+
+              {/* Barra IMC */}
+              <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full w-[42%] bg-green-500"></div>
+              </div>
+
+              <div className="flex justify-between text-xs text-gray-600">
+                <span>Mínimo registrado: <b>18.1</b></span>
+                <span>Máximo registrado: <b>31.2</b></span>
+              </div>
+            </CardContent>
+          </Card>
+
+        </div>
+
+        {/* PROGRESO DE METAS */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Progreso de Metas</CardTitle>
+            <CardDescription>
+              Porcentaje de metas alcanzadas por los afiliados del gimnasio
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div>
+              <div className="text-4xl font-bold">76%</div>
+              <p className="text-sm text-gray-600">
+                38 metas cumplidas de 50 totales
+              </p>
+            </div>
+
+            {/* Barra progreso */}
+            <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full w-[76%] bg-green-500"></div>
+            </div>
+
+            <div className="grid grid-cols-3 text-center text-sm pt-2 border-t">
+              <div>
+                <div className="text-green-600 font-bold text-xl">26</div>
+                <p>Metas de peso</p>
+              </div>
+              <div>
+                <div className="text-blue-600 font-bold text-xl">11</div>
+                <p>Metas de resistencia</p>
+              </div>
+              <div>
+                <div className="text-purple-600 font-bold text-xl">13</div>
+                <p>Metas de fuerza</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* DISTRIBUCIÓN CONDICIÓN FÍSICA */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Distribución por Condición Física</CardTitle>
+            <CardDescription>
+              Cantidad de afiliados según su índice de masa corporal
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+
+            {/* Bajo peso */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Bajo peso (IMC &lt; 18.5)</span>
+                <span>4 afiliados · 8%</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-[8%] bg-blue-500 rounded-full"></div>
+              </div>
+            </div>
+
+            {/* Normal */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Normal (18.5 - 24.9)</span>
+                <span>22 afiliados · 44%</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-[44%] bg-green-500 rounded-full"></div>
+              </div>
+            </div>
+
+            {/* Sobrepeso */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Sobrepeso (25 - 29.9)</span>
+                <span>16 afiliados · 32%</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-[32%] bg-yellow-500 rounded-full"></div>
+              </div>
+            </div>
+
+            {/* Obesidad */}
+            <div>
+              <div className="flex justify-between text-xs mb-1">
+                <span>Obesidad (≥ 30)</span>
+                <span>8 afiliados · 16%</span>
+              </div>
+              <div className="h-2 bg-gray-200 rounded-full">
+                <div className="h-full w-[16%] bg-red-500 rounded-full"></div>
+              </div>
+            </div>
+
+          </CardContent>
+        </Card>
+
+      </div>
+      {/* =================== FIN BLOQUE IMC =================== */}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6 mt-6">
         {/* Nuevos Usuarios */}
+
         <Card className="flex flex-col items-center justify-center">
           <CardContent className="flex flex-col items-center justify-center pt-6 pb-6">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4">
