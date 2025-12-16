@@ -301,18 +301,26 @@ export function EjerciciosVer() {
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-red-600 hover:bg-red-700"
-              disabled={deleteMutation.isPending}
-              onClick={() =>
-                deleteDialog.ejercicioId &&
-                handleDelete(deleteDialog.ejercicioId)
-              }
-            >
-              {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
+  <AlertDialogCancel asChild>
+    <Button variant="outline">
+      Cancelar
+    </Button>
+  </AlertDialogCancel>
+
+  <AlertDialogAction asChild>
+    <Button
+      className="bg-red-600 hover:bg-red-700"
+      disabled={deleteMutation.isPending}
+      onClick={() =>
+        deleteDialog.ejercicioId &&
+        handleDelete(deleteDialog.ejercicioId)
+      }
+    >
+      {deleteMutation.isPending ? "Eliminando..." : "Eliminar"}
+    </Button>
+  </AlertDialogAction>
+</AlertDialogFooter>
+
         </AlertDialogContent>
       </AlertDialog>
     </div>
