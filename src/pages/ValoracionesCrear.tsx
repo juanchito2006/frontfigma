@@ -1,9 +1,3 @@
-/**
- * ValoracionesCrear - Página para crear una nueva valoración
- * 
- * Formulario completo para la creación de valoraciones con todas las secciones.
- * Los datos se enviarán a la API del backend personalizado.
- */
 import { useNavigate } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { useAuth } from "../context"
@@ -31,15 +25,77 @@ import {
   Mail, Phone, ArrowLeft
 } from "lucide-react"
 import { EPSCombobox } from "../components/common/EPSCombobox"
+import { useDebounce } from "../hooks/useDebounce"
+import { useList } from "../hooks/useGenericCrud"
+import type { Usuario } from "../types/schema.types"
 
 
 export function ValoracionesCrear() {
   const navigate = useNavigate()
 
-  // Estados - SOLO estos
   const [tiposPeso, setTiposPeso] = useState('')
   const [tipoObesidad, setTipoObesidad] = useState('')
   const [selectedEps, setSelectedEps] = useState('')
+
+  const [searchUsuario, setSearchUsuario] = useState('')
+  const [selectedUsuario, setSelectedUsuario] = useState<Usuario | null>(null)
+  const [showUsuarioList, setShowUsuarioList] = useState(false)
+
+  const debouncedSearch = useDebounce(searchUsuario, 300)
+  const shouldFetchUsuarios = debouncedSearch.trim().length >= 3
+
+  const [programas, setProgramas] = useState<Array<{
+    id: string;
+    frecuencia: string;
+    objetivo: string;
+    dias: Array<{
+      id: string;
+      nombre: string;
+      repeticionMin: number;
+      repeticionMax: number;
+      ejercicios: Array<{
+        id: string;
+        ejercicioId: number;
+        nombre: string;
+        descripcion: string;
+        imagen: string | null;
+      }>;
+    }>;
+  }>>([])
+
+  const [searchEjercicio, setSearchEjercicio] = useState<{ [key: string]: string }>({})
+  const [showEjercicioList, setShowEjercicioList] = useState<{ [key: string]: boolean }>({})
+  const debouncedSearchEjercicio = useDebounce(Object.values(searchEjercicio).join(''), 300)
+
+  const {
+    data: usuarios = [],
+    isLoading: loadingUsuarios,
+  } = useList<Usuario>({
+    resourceName: "usuario",
+    queryOptions: {
+      enabled: shouldFetchUsuarios,
+    },
+  })
+
+  const shouldFetchEjercicios = Object.values(searchEjercicio).some(
+    search => search.trim().length >= 3
+  )
+
+  const {
+    data: ejercicios = [],
+    isLoading: loadingEjercicios,
+  } = useList<{
+    eje_id: number;
+    eje_nombre: string;
+    eje_descripcion: string;
+    eje_imagen: string | null;
+    eje_nivel: string;
+  }>({
+    resourceName: "ejercicio",
+    queryOptions: {
+      enabled: shouldFetchEjercicios,
+    },
+  })
 
   const [formData, setFormData] = useState({
 
@@ -159,6 +215,205 @@ export function ValoracionesCrear() {
   })
 
 
+  const handleSelectUsuario = (usuario: Usuario) => {
+    setSelectedUsuario(usuario)
+    setFormData(prev => ({
+      ...prev,
+      nombres: usuario.usu_nombre,
+      apellidos: usuario.usu_apellido,
+      documento: usuario.usu_di.toString(),
+      telefono: usuario.usu_telefono,
+      email: usuario.usu_email,
+      direccion: usuario.usu_direccion,
+      eps: usuario.usu_eps,
+      ocupacion: usuario.usu_ocupacion,
+    }))
+    setSearchUsuario('')
+    setShowUsuarioList(false)
+  }
+
+  // Después de handleSelectUsuario:
+
+  const agregarPrograma = () => {
+    const nuevoPrograma = {
+      id: `programa-${Date.now()}`,
+      nombre: `Programa ${programas.length + 1}`,
+      frecuencia: '',
+      objetivo: '',
+      dias: []
+    }
+    setProgramas([...programas, nuevoPrograma])
+  }
+
+  const eliminarPrograma = (programaId: string) => {
+    setProgramas(programas.filter(p => p.id !== programaId))
+  }
+
+  const actualizarPrograma = (programaId: string, campo: string, valor: string) => {
+    setProgramas(programas.map(p =>
+      p.id === programaId ? { ...p, [campo]: valor } : p
+    ))
+  }
+
+  const agregarDia = (programaId: string) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        const nuevoDia = {
+          id: `dia-${Date.now()}`,
+          nombre: `Día ${p.dias.length + 1}`,
+          repeticionMin: 8,
+          repeticionMax: 12,
+          ejercicios: []
+        }
+        return { ...p, dias: [...p.dias, nuevoDia] }
+      }
+      return p
+    }))
+  }
+
+  const eliminarDia = (programaId: string, diaId: string) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return { ...p, dias: p.dias.filter(d => d.id !== diaId) }
+      }
+      return p
+    }))
+  }
+
+  const actualizarDia = (programaId: string, diaId: string, campo: string, valor: any) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return {
+          ...p,
+          dias: p.dias.map(d =>
+            d.id === diaId ? { ...d, [campo]: valor } : d
+          )
+        }
+      }
+      return p
+    }))
+  }
+
+  const agregarEjercicioADia = (programaId: string, diaId: string, ejercicio: any) => {
+    const nuevoEjercicio = {
+      id: `ejercicio-${Date.now()}`,
+      ejercicioId: ejercicio.eje_id,
+      nombre: ejercicio.eje_nombre,
+      descripcion: ejercicio.eje_descripcion,
+      imagen: ejercicio.eje_imagen,
+      series: 3,
+      repeticiones: 12,
+      peso: 0,
+      observacion: ''
+    }
+
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return {
+          ...p,
+          dias: p.dias.map(d => {
+            if (d.id === diaId) {
+              return { ...d, ejercicios: [...d.ejercicios, nuevoEjercicio] }
+            }
+            return d
+          })
+        }
+      }
+      return p
+    }))
+
+    // Limpiar búsqueda
+    const searchKey = `${programaId}-${diaId}`
+    setSearchEjercicio(prev => ({ ...prev, [searchKey]: '' }))
+    setShowEjercicioList(prev => ({ ...prev, [searchKey]: false }))
+  }
+
+  const eliminarEjercicioDeDia = (programaId: string, diaId: string, ejercicioId: string) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return {
+          ...p,
+          dias: p.dias.map(d => {
+            if (d.id === diaId) {
+              return { ...d, ejercicios: d.ejercicios.filter(e => e.id !== ejercicioId) }
+            }
+            return d
+          })
+        }
+      }
+      return p
+    }))
+  }
+
+  const actualizarEjercicio = (
+    programaId: string,
+    diaId: string,
+    ejercicioId: string,
+    campo: string,
+    valor: any
+  ) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return {
+          ...p,
+          dias: p.dias.map(d => {
+            if (d.id === diaId) {
+              return {
+                ...d,
+                ejercicios: d.ejercicios.map(e =>
+                  e.id === ejercicioId ? { ...e, [campo]: valor } : e
+                )
+              }
+            }
+            return d
+          })
+        }
+      }
+      return p
+    }))
+  }
+
+  const moverEjercicio = (
+    programaId: string,
+    diaId: string,
+    fromIndex: number,
+    toIndex: number
+  ) => {
+    setProgramas(programas.map(p => {
+      if (p.id === programaId) {
+        return {
+          ...p,
+          dias: p.dias.map(d => {
+            if (d.id === diaId) {
+              const nuevosEjercicios = [...d.ejercicios]
+              const [ejercicioMovido] = nuevosEjercicios.splice(fromIndex, 1)
+              nuevosEjercicios.splice(toIndex, 0, ejercicioMovido)
+              return { ...d, ejercicios: nuevosEjercicios }
+            }
+            return d
+          })
+        }
+      }
+      return p
+    }))
+  }
+
+  const getFilteredEjercicios = (searchKey: string) => {
+    const searchTerm = searchEjercicio[searchKey] || ''
+    if (searchTerm.length < 3) return []
+
+    return ejercicios.filter(ej =>
+      ej.eje_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ej.eje_descripcion.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }
+
+  const filteredUsuarios = usuarios.filter(u =>
+    u.usu_nombre?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    u.usu_apellido?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    u.usu_di?.toString().includes(debouncedSearch)
+  )
+
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
@@ -172,12 +427,6 @@ export function ValoracionesCrear() {
     }
 
     try {
-      // TODO: Aquí se conectará con la API del backend
-      // const response = await fetch('/api/valoraciones', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // })
 
       toast.success("Valoración guardada exitosamente")
       navigate('/valoraciones/ver')
@@ -200,7 +449,119 @@ export function ValoracionesCrear() {
             <div className="bg-green-700 text-white p-3 rounded-t-lg">
               <h2 className="text-lg">Información personal</h2>
             </div>
-            <div className="bg-white border border-gray-200 rounded-b-lg p-4">
+            <div className="bg-white border border-gray-200 rounded-b-lg p-4 space-y-4">
+
+              {/* Buscador de Usuario */}
+              {!selectedUsuario && (
+                <div className="space-y-2">
+                  <Label htmlFor="search-usuario" className="text-base font-semibold">
+                    Buscar Afiliado *
+                  </Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      id="search-usuario"
+                      placeholder="Buscar por nombre o documento (mínimo 3 caracteres)..."
+                      value={searchUsuario}
+                      onChange={(e) => {
+                        setSearchUsuario(e.target.value)
+                        setShowUsuarioList(e.target.value.length >= 3)
+                      }}
+                      onFocus={() => searchUsuario.length >= 3 && setShowUsuarioList(true)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Lista de resultados */}
+                  {showUsuarioList && shouldFetchUsuarios && (
+                    <div className="border rounded-lg bg-white shadow-lg max-h-60 overflow-y-auto">
+                      {loadingUsuarios ? (
+                        <div className="p-4 text-center text-gray-500">
+                          Buscando afiliados...
+                        </div>
+                      ) : filteredUsuarios.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500">
+                          No se encontraron afiliados
+                        </div>
+                      ) : (
+                        <div className="divide-y">
+                          {filteredUsuarios.map((usuario) => (
+                            <div
+                              key={usuario.usu_di}
+                              className="p-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                              onClick={() => handleSelectUsuario(usuario)}
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    {usuario.usu_nombre} {usuario.usu_apellido}
+                                  </p>
+                                  <p className="text-sm text-gray-500">
+                                    Doc: {usuario.usu_di} | {usuario.usu_email}
+                                  </p>
+                                </div>
+                                <Plus className="h-5 w-5 text-green-600" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {searchUsuario.length > 0 && searchUsuario.length < 3 && (
+                    <p className="text-sm text-gray-500">
+                      Escribe al menos 3 caracteres para buscar
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Card de Usuario Seleccionado */}
+              {selectedUsuario && (
+                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-green-600 text-white rounded-full p-3">
+                        <UserCheck className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-gray-900 text-lg">
+                          {selectedUsuario.usu_nombre} {selectedUsuario.usu_apellido}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          ID: <span className="text-blue-600 font-mono">{selectedUsuario.usu_di}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedUsuario(null)
+                        setFormData(prev => ({
+                          ...prev,
+                          nombres: '',
+                          apellidos: '',
+                          documento: '',
+                          telefono: '',
+                          email: '',
+                          direccion: '',
+                          eps: '',
+                          ocupacion: '',
+                        }))
+                      }}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="h-4 w-4 mr-1" />
+                      Cambiar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Campos de información (read-only cuando hay usuario seleccionado) */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label className="mb-4" htmlFor="nombres">Nombres *</Label>
@@ -209,6 +570,8 @@ export function ValoracionesCrear() {
                     placeholder="Ingrese nombres"
                     value={formData.nombres}
                     onChange={(e) => handleInputChange('nombres', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -218,6 +581,8 @@ export function ValoracionesCrear() {
                     placeholder="Ingrese apellidos"
                     value={formData.apellidos}
                     onChange={(e) => handleInputChange('apellidos', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -227,6 +592,8 @@ export function ValoracionesCrear() {
                     placeholder="Número de documento"
                     value={formData.documento}
                     onChange={(e) => handleInputChange('documento', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -236,6 +603,8 @@ export function ValoracionesCrear() {
                     placeholder="Número de teléfono"
                     value={formData.telefono}
                     onChange={(e) => handleInputChange('telefono', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -245,6 +614,8 @@ export function ValoracionesCrear() {
                     placeholder="Dirección"
                     value={formData.direccion}
                     onChange={(e) => handleInputChange('direccion', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -254,6 +625,8 @@ export function ValoracionesCrear() {
                     placeholder="E-mail"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -263,6 +636,8 @@ export function ValoracionesCrear() {
                     placeholder="Ocupación"
                     value={formData.ocupacion}
                     onChange={(e) => handleInputChange('ocupacion', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
                 <div className="space-y-2">
@@ -272,6 +647,8 @@ export function ValoracionesCrear() {
                     placeholder="EPS"
                     value={formData.eps}
                     onChange={(e) => handleInputChange('eps', e.target.value)}
+                    disabled
+                    className={selectedUsuario ? "bg-gray-100 cursor-not-allowed" : ""}
                   />
                 </div>
               </div>
@@ -1047,58 +1424,317 @@ export function ValoracionesCrear() {
           </div>
 
           {/* Programa de entrenamiento */}
-          <div className="border rounded-md mt-6">
-            <div className="bg-green-700 text-white p-3 rounded-t-lg">
-              <h2 className="text-lg">Observaciones</h2>
-            </div>
-
-            <Accordion type="single" collapsible className="w-full">
-              {[1, 2, 3, 4, 5].map((dia, index) => (
-                <AccordionItem key={index} value={`dia-${dia}`}>
-                  <div className="flex items-center justify-between bg-gray-200 px-4">
-                    <AccordionTrigger className="font-medium">Día {dia}</AccordionTrigger>
-                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800">
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-
-                  <AccordionContent className="p-4 space-y-4">
-                    {/* Buscador */}
-                    <div className="flex items-center gap-2">
-                      <Search className="text-green-700" />
-                      <Input placeholder="Seleccionar ejercicio" />
-                    </div>
-
-                    {/* Lista de ejercicios */}
-                    <div className="space-y-2">
-                      {["Sentadillas", "Sentadillas", "Sentadillas"].map((ej, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between border rounded px-2 py-1"
-                        >
-                          <div className="flex items-center gap-2">
-                            <GripVertical className="text-gray-500 cursor-move" />
-                            <span>{ej}</span>
-                          </div>
-                          <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800">
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-
-            {/* Botón agregar día */}
-            <div className="p-4">
-              <Button className="flex items-center gap-2 bg-gray-800 text-white hover:bg-gray-700">
-                <PlusCircle className="w-4 h-4" />
-                Día
+          {/* Programa de entrenamiento */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between bg-green-700 text-white p-3 rounded-lg">
+              <h2 className="text-lg">Programas de Entrenamiento</h2>
+              <Button
+                type="button"
+                onClick={agregarPrograma}
+                className="bg-white text-green-700 hover:bg-green-50"
+                size="sm"
+              >
+                <Plus className="h-4 w-4 mr-1" />
+                Agregar Programa
               </Button>
             </div>
+
+            {programas.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-gray-500">
+                  <Dumbbell className="h-12 w-12 mx-auto mb-3 text-gray-400 mt-4" />
+                  <p>No hay programas de entrenamiento.</p>
+                  <p className="text-sm">Haz clic en "Agregar Programa" para comenzar.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {programas.map((programa, programaIndex) => (
+                  <Card key={programa.id} className="border-2 border-green-200">
+                    <CardHeader className="bg-green-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 space-y-3">
+                          <div className="flex items-center gap-3">
+                            <h2 className="">Programa {programas.length + 1}</h2>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => eliminarPrograma(programa.id)}
+                              className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </Button>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Frecuencia</Label>
+                              <Input
+                                value={programa.frecuencia}
+                                onChange={(e) => actualizarPrograma(programa.id, 'frecuencia', e.target.value)}
+                                placeholder="Ej: 3 veces por semana"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Objetivo</Label>
+                              <Input
+                                value={programa.objetivo}
+                                onChange={(e) => actualizarPrograma(programa.id, 'objetivo', e.target.value)}
+                                placeholder="Ej: Hipertrofia, Fuerza..."
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-6">
+                      <Accordion type="single" collapsible className="w-full">
+                        {programa.dias.map((dia, diaIndex) => {
+                          const searchKey = `${programa.id}-${dia.id}`
+                          const filteredEjs = getFilteredEjercicios(searchKey)
+
+                          return (
+                            <AccordionItem key={dia.id} value={dia.id}>
+                              <div className="flex items-center justify-between bg-gray-100 px-4 rounded-t-md">
+                                <AccordionTrigger className="font-medium hover:no-underline flex-1">
+                                  <div className="flex items-center gap-2">
+                                    <Calendar className="h-4 w-4 text-green-700" />
+                                    {dia.nombre} ({dia.ejercicios.length} ejercicio{dia.ejercicios.length !== 1 ? 's' : ''})
+                                  </div>
+                                </AccordionTrigger>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    eliminarDia(programa.id, dia.id)
+                                  }}
+                                  className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+
+                              <AccordionContent className="p-4 space-y-4 bg-gray-50">
+                                {/* Configuración del día */}
+                                <div className="grid grid-cols-2 gap-3 p-3 bg-white rounded-md border">
+                                  <div>
+                                    <Label className="text-xs">Rep. Mínimas</Label>
+                                    <Input
+                                      type="number"
+                                      value={dia.repeticionMin}
+                                      onChange={(e) => actualizarDia(programa.id, dia.id, 'repeticionMin', parseInt(e.target.value))}
+                                      min="1"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-xs">Rep. Máximas</Label>
+                                    <Input
+                                      type="number"
+                                      value={dia.repeticionMax}
+                                      onChange={(e) => actualizarDia(programa.id, dia.id, 'repeticionMax', parseInt(e.target.value))}
+                                      min="1"
+                                    />
+                                  </div>
+                                </div>
+
+                                {/* Buscador de ejercicios */}
+                                <div className="space-y-2">
+                                  <div className="relative">
+                                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-green-700 h-4 w-4" />
+                                    <Input
+                                      placeholder="Buscar ejercicio (mínimo 3 caracteres)..."
+                                      value={searchEjercicio[searchKey] || ''}
+                                      onChange={(e) => {
+                                        setSearchEjercicio(prev => ({ ...prev, [searchKey]: e.target.value }))
+                                        setShowEjercicioList(prev => ({
+                                          ...prev,
+                                          [searchKey]: e.target.value.length >= 3
+                                        }))
+                                      }}
+                                      onFocus={() => {
+                                        if ((searchEjercicio[searchKey] || '').length >= 3) {
+                                          setShowEjercicioList(prev => ({ ...prev, [searchKey]: true }))
+                                        }
+                                      }}
+                                      className="pl-10"
+                                    />
+                                  </div>
+
+                                  {/* Lista de ejercicios disponibles */}
+                                  {showEjercicioList[searchKey] && (searchEjercicio[searchKey] || '').length >= 3 && (
+                                    <div className="border rounded-lg bg-white shadow-lg max-h-64 overflow-y-auto">
+                                      {loadingEjercicios ? (
+                                        <div className="p-4 text-center text-gray-500">
+                                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-700 mx-auto"></div>
+                                          <p className="mt-2">Buscando ejercicios...</p>
+                                        </div>
+                                      ) : filteredEjs.length === 0 ? (
+                                        <div className="p-4 text-center text-gray-500">
+                                          No se encontraron ejercicios
+                                        </div>
+                                      ) : (
+                                        <div className="divide-y">
+                                          {filteredEjs.map((ejercicio) => (
+                                            <div
+                                              key={ejercicio.eje_id}
+                                              className="p-3 hover:bg-green-50 cursor-pointer transition-colors flex items-center gap-3"
+                                              onClick={() => agregarEjercicioADia(programa.id, dia.id, ejercicio)}
+                                            >
+                                              {/* Imagen del ejercicio */}
+                                              <div className="flex-shrink-0">
+                                                {ejercicio.eje_imagen ? (
+                                                  <img
+                                                    src={ejercicio.eje_imagen}
+                                                    alt={ejercicio.eje_nombre}
+                                                    className="w-16 h-16 object-cover rounded-md border"
+                                                    onError={(e) => {
+                                                      e.currentTarget.src = 'https://via.placeholder.com/64?text=Sin+Imagen'
+                                                    }}
+                                                  />
+                                                ) : (
+                                                  <div className="w-16 h-16 bg-gray-200 rounded-md flex items-center justify-center">
+                                                    <Dumbbell className="h-6 w-6 text-gray-400" />
+                                                  </div>
+                                                )}
+                                              </div>
+
+                                              {/* Información del ejercicio */}
+                                              <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-900 truncate">
+                                                  {ejercicio.eje_nombre}
+                                                </p>
+                                                <p className="text-sm text-gray-500 truncate">
+                                                  {ejercicio.eje_descripcion}
+                                                </p>
+                                                <Badge variant="outline" className="mt-1">
+                                                  {ejercicio.eje_nivel}
+                                                </Badge>
+                                              </div>
+
+                                              <Plus className="h-5 w-5 text-green-600 flex-shrink-0" />
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+
+                                  {(searchEjercicio[searchKey] || '').length > 0 && (searchEjercicio[searchKey] || '').length < 3 && (
+                                    <p className="text-sm text-gray-500">
+                                      Escribe al menos 3 caracteres para buscar
+                                    </p>
+                                  )}
+                                </div>
+
+                                {/* Lista de ejercicios agregados */}
+                                <div className="space-y-2">
+                                  {dia.ejercicios.length === 0 ? (
+                                    <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
+                                      <Dumbbell className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                                      <p className="text-sm text-gray-500">
+                                        No hay ejercicios en este día
+                                      </p>
+                                    </div>
+                                  ) : (
+                                    dia.ejercicios.map((ejercicio, ejercicioIndex) => (
+                                      <div
+                                        key={ejercicio.id}
+                                        className="border rounded-lg p-3 bg-white hover:shadow-md transition-shadow"
+                                      >
+                                        <div className="flex gap-3">
+                                          {/* Imagen */}
+                                          <div className="flex-shrink-0">
+                                            {ejercicio.imagen ? (
+                                              <img
+                                                src={ejercicio.imagen}
+                                                alt={ejercicio.nombre}
+                                                className="w-20 h-20 object-cover rounded-md border"
+                                                onError={(e) => {
+                                                  e.currentTarget.src = 'https://via.placeholder.com/80?text=Sin+Imagen'
+                                                }}
+                                              />
+                                            ) : (
+                                              <div className="w-20 h-20 bg-gray-200 rounded-md flex items-center justify-center">
+                                                <Dumbbell className="h-8 w-8 text-gray-400" />
+                                              </div>
+                                            )}
+                                          </div>
+
+                                          {/* Información y controles */}
+                                          <div className="flex-1 space-y-2">
+                                            <div className="flex items-start justify-between">
+                                              <div className="flex-1">
+                                                <p className="font-semibold text-gray-900">{ejercicio.nombre}</p>
+                                                <p className="text-xs text-gray-500">{ejercicio.descripcion}</p>
+                                              </div>
+
+                                              {/* Controles de orden */}
+                                              <div className="flex items-center gap-1">
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7"
+                                                  onClick={() => moverEjercicio(programa.id, dia.id, ejercicioIndex, ejercicioIndex - 1)}
+                                                  disabled={ejercicioIndex === 0}
+                                                >
+                                                  {/* <ChevronUp className="h-4 w-4" /> */}
+                                                </Button>
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7"
+                                                  onClick={() => moverEjercicio(programa.id, dia.id, ejercicioIndex, ejercicioIndex + 1)}
+                                                  disabled={ejercicioIndex === dia.ejercicios.length - 1}
+                                                >
+                                                  <ChevronDown className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                  type="button"
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7 text-red-600 hover:text-red-800"
+                                                  onClick={() => eliminarEjercicioDeDia(programa.id, dia.id, ejercicio.id)}
+                                                >
+                                                  <X className="h-4 w-4" />
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )
+                        })}
+                      </Accordion>
+
+                      {/* Botón agregar día */}
+                      <div className="mt-4">
+                        <Button
+                          type="button"
+                          onClick={() => agregarDia(programa.id)}
+                          variant="outline"
+                          className="w-full border-dashed border-2 hover:border-green-600 hover:bg-green-50"
+                        >
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          Agregar Día al Programa
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
+
 
           {/* Observaciones */}
           <div>
@@ -1115,16 +1751,6 @@ export function ValoracionesCrear() {
                     placeholder="Observaciones generales..."
                     value={formData.observaciones}
                     onChange={(e) => handleInputChange('observaciones', e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="mb-4" htmlFor="comentario">Comentario</Label>
-                  <Textarea
-                    id="comentario"
-                    rows={4}
-                    placeholder="Comentarios adicionales..."
-                    value={formData.comentario}
-                    onChange={(e) => handleInputChange('comentario', e.target.value)}
                   />
                 </div>
               </div>
