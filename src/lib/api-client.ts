@@ -5,62 +5,49 @@ export class ApiClient {
     this.baseURL = baseURL;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options?: RequestInit
-  ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
-
-    const config: RequestInit = {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    };
-
-    const response = await fetch(url, config);
-
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  }
-
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    const res = await fetch(`${this.baseURL}${endpoint}`);
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
   }
 
   async post<T>(endpoint: string, data: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'POST',
+    const res = await fetch(`${this.baseURL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
-  }
 
-  async put<T>(endpoint: string, data: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
   }
 
   async patch<T>(endpoint: string, data: unknown): Promise<T> {
-    return this.request<T>(endpoint, {
-      method: 'PATCH',
+    const res = await fetch(`${this.baseURL}${endpoint}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    return res.json();
   }
 
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(
-      endpoint, {
-      method: 'DELETE'
-    }
-    );
+  // 🔥 DELETE SIN response.json()
+async delete(endpoint: string): Promise<void> {
+  const response = await fetch(`${this.baseURL}${endpoint}`, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Error ${response.status}: ${response.statusText}`);
   }
+
+  // ⚠️ NO intentar response.json()
+  return;
 }
 
-export const apiClient = new ApiClient('https://gym-combarranquilla-api.leapcell.app');
+}
+
+export const apiClient = new ApiClient( 'https://gym-combarranquilla-api.leapcell.app');
 

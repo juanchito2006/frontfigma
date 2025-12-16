@@ -29,7 +29,6 @@ import {
   ClientesCrear,
   ClientesVer,
   ClienteDetalle,
-  ClienteEditar,
   ValoracionesCrear,
   ValoracionesVer,
   ValoracionDetalle,
@@ -39,9 +38,10 @@ import {
   EjercicioEditar,   // 👈 AÑADIR ESTO
   Calendario,
   Configuracion,
-  Perfil
-} from "../pages"
-import { EstadisticasGym } from "../pages/EstadisticasGym"
+  EjerciciosDelete,
+  Perfil,
+} from "../IndexPages.tsx"
+import { EstadisticasGym } from "../EstadisticasGym.tsx"
 
 /**
  * AppRoutes - Componente que define todas las rutas de la aplicación
@@ -68,7 +68,6 @@ export function AppRoutes() {
         <Route path="crear" element={<ClientesCrear />} />
         <Route path="ver" element={<ClientesVer />} />
         <Route path=":id" element={<ClienteDetalle />} />
-        <Route path=":id/editar" element={<ClienteEditar />} />
       </Route>
 
       {/* 

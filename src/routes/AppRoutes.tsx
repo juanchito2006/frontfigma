@@ -29,7 +29,6 @@ import {
   ClientesCrear,
   ClientesVer,
   ClienteDetalle,
-  ClienteEditar,
   ValoracionesCrear,
   ValoracionesVer,
   ValoracionDetalle,
@@ -68,7 +67,6 @@ export function AppRoutes() {
         <Route path="crear" element={<ClientesCrear />} />
         <Route path="ver" element={<ClientesVer />} />
         <Route path=":id" element={<ClienteDetalle />} />
-        <Route path=":id/editar" element={<ClienteEditar />} />
       </Route>
 
       {/* 
