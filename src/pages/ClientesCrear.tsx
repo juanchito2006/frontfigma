@@ -6,8 +6,16 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Shield, Check, X } from "lucide-react";
 import { useCreate } from "../hooks/useGenericCrud";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 export function ClientesCrear() {
   const navigate = useNavigate();
@@ -27,68 +35,89 @@ export function ClientesCrear() {
     telefono: "",
     sexo: "",
     ocupacion: "",
-    rol: "3", // Por defecto Cliente (rol_id: 3)
+    rol: "3",
   });
+
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [formValid, setFormValid] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validaciones básicas
+  const validateForm = () => {
     if (!formData.nombres || !formData.apellidos || !formData.email || !formData.documento) {
-      toast.error("Por favor complete los campos obligatorios");
-      return;
+      return false;
     }
 
-    // Validar que el documento sea un número válido
     const documentoNumero = Number(formData.documento);
     if (isNaN(documentoNumero) || documentoNumero <= 0) {
-      toast.error("El documento debe ser un número válido");
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmitClick = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Por favor complete los campos obligatorios correctamente");
       return;
     }
 
-    // Validar formato de fecha
+    setFormValid(true);
+    setShowPrivacyModal(true);
+  };
+
+  const createUser = () => {
+    const documentoNumero = Number(formData.documento);
+
     const formatDate = (dateString: string): Date | null => {
       if (!dateString) return null;
       const date = new Date(dateString);
       return isNaN(date.getTime()) ? null : date;
     };
 
-    // Preparar el body según el ejemplo funcional
     const body = {
       usu_di: documentoNumero,
       usu_nombre: formData.nombres.trim(),
       usu_apellido: formData.apellidos.trim(),
       usu_email: formData.email.trim(),
-      usu_contrase_a: formData.password || "password123", // Contraseña por defecto si está vacía
+      usu_contrase_a: formData.password || "password123",
       usu_direccion: formData.direccion.trim() || null,
       usu_fecha_nacimiento: formatDate(formData.fechaNacimiento) || null,
       usu_fecha_expedicion: formatDate(formData.fechaExpedicion) || null,
       usu_telefono: formData.telefono.trim() || null,
-      usu_eps: formData.eps.trim() || null,
+      usu_eps: formData.eps === "No tiene EPS" ? null : formData.eps.trim(),
       usu_ocupacion: formData.ocupacion.trim() || null,
-      usu_ultima_val: new Date(), // Fecha actual
-      usu_status: true, // Siempre activo al crear
-      rol_idfk: parseInt(formData.rol) || 3, // 3 = Cliente por defecto
+      usu_ultima_val: new Date(),
+      usu_status: true,
+      rol_idfk: parseInt(formData.rol) || 3,
       usu_sexo: formData.sexo || null,
       eliminado: false,
     };
 
-    console.log("Enviando usuario:", JSON.stringify(body, null, 2));
-
     createUsuario.mutate(body, {
-      onSuccess: (response) => {
-        toast.success("Usuario creado correctamente");
+      onSuccess: () => {
+        toast.success("Afiliado creado correctamente");
         navigate("/clientes/ver");
       },
       onError: (error: any) => {
         console.error("Error al crear usuario:", error);
-        toast.error(`Error al crear el usuario: ${error.message || "Error desconocido"}`);
+        toast.error(`Error al crear el afiliado: ${error.message || "Error desconocido"}`);
       },
     });
+  };
+
+  const handleAcceptPrivacy = () => {
+    setShowPrivacyModal(false);
+    createUser();
+  };
+
+  const handleDeclinePrivacy = () => {
+    setShowPrivacyModal(false);
+    toast.info("Creación de afiliado cancelada. No se guardarán los datos.");
   };
 
   return (
@@ -100,14 +129,14 @@ export function ClientesCrear() {
         </Button>
       </div>
 
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmitClick}>
         <Card>
           <CardHeader>
             <CardTitle>Crear Nuevo Afiliado</CardTitle>
             <CardDescription>Complete los datos del nuevo afiliado</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Rol - PRIMERO como solicitaste */}
+            {/* Rol */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="rol">Rol *</Label>
@@ -127,10 +156,6 @@ export function ClientesCrear() {
                       "Cliente: Solo puede ver su información"}
                 </p>
               </div>
-            </div>
-
-            {/* Información personal */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               <div className="space-y-2">
                 <Label htmlFor="documento">Número de Documento *</Label>
@@ -142,7 +167,10 @@ export function ClientesCrear() {
                   required
                 />
               </div>
+            </div>
 
+            {/* Información personal */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nombres">Nombres *</Label>
                 <Input
@@ -251,6 +279,9 @@ export function ClientesCrear() {
                   onChange={(e) => handleInputChange("password", e.target.value)}
                   placeholder="Dejar vacío para contraseña por defecto"
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Si se deja vacío, se usará "password123"
+                </p>
               </div>
             </div>
 
@@ -323,7 +354,6 @@ export function ClientesCrear() {
                 </Select>
               </div>
 
-
               <div className="space-y-2">
                 <Label htmlFor="ocupacion">Ocupación</Label>
                 <Input
@@ -353,9 +383,100 @@ export function ClientesCrear() {
                 Cancelar
               </Button>
             </div>
+
+            {/* Aviso de privacidad */}
+            <div className="text-xs text-gray-500 p-3 bg-blue-50 rounded-md border border-blue-100">
+              <p className="font-medium text-blue-700 mb-1">
+                <Shield className="h-3 w-3 inline mr-1" />
+                Aviso de Privacidad
+              </p>
+              <p>
+                Al crear un afiliado, estarás aceptando nuestra política de tratamiento de datos.
+                Los datos personales se utilizarán únicamente para la gestión del gimnasio y no serán compartidos con terceros.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </form>
+
+      {/* Modal de Política de Datos */}
+      {/* Modal de Política de Datos - Versión Compacta */}
+      <Dialog open={showPrivacyModal} onOpenChange={setShowPrivacyModal}>
+        <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Shield className="h-5 w-5 text-green-600" />
+              Política de Tratamiento de Datos
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              Lea y acepte para crear el afiliado
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto py-2 px-1">
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-blue-50 rounded border border-blue-100">
+                <p className="font-medium text-blue-800 mb-1">Finalidad</p>
+                <p className="text-blue-700">Datos utilizados exclusivamente para gestión del gimnasio (afiliados, valoraciones, entrenamientos).</p>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded border">
+                <p className="font-medium text-gray-800 mb-1">Datos Recolectados</p>
+                <ul className="list-disc pl-4 space-y-1 text-gray-700">
+                  <li>Identificación (nombre, documento)</li>
+                  <li>Contacto (email, teléfono)</li>
+                  <li>Salud (valoraciones físicas)</li>
+                  <li>EPS y ocupación</li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-gray-50 rounded border">
+                <p className="font-medium text-gray-800 mb-1">Seguridad y Privacidad</p>
+                <ul className="list-disc pl-4 space-y-1 text-gray-700">
+                  <li>Datos almacenados de forma segura</li>
+                  <li>Acceso restringido a personal autorizado</li>
+                  <li><strong>No vendemos ni compartimos datos</strong></li>
+                  <li>Puede solicitar eliminación de datos</li>
+                </ul>
+              </div>
+
+              <div className="p-3 bg-green-50 rounded border border-green-200">
+                <p className="font-medium text-green-800 mb-1 flex items-center gap-2">
+                  <Check className="h-4 w-4" />
+                  Confirmación
+                </p>
+                <p className="text-green-700">
+                  Al aceptar, confirma haber leído esta política y autoriza el tratamiento de datos según lo descrito.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-shrink-0 pt-4 border-t">
+            <div className="flex gap-2 w-full">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDeclinePrivacy}
+                className="flex-1"
+                size="sm"
+              >
+                <X className="h-4 w-4 mr-2" />
+                No acepto
+              </Button>
+              <Button
+                type="button"
+                onClick={handleAcceptPrivacy}
+                className="bg-green-600 hover:bg-green-700 flex-1"
+                size="sm"
+              >
+                <Check className="h-4 w-4 mr-2" />
+                Acepto
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
