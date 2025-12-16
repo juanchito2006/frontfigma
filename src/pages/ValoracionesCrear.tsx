@@ -26,8 +26,30 @@ import {
 } from "lucide-react"
 import { EPSCombobox } from "../components/common/EPSCombobox"
 import { useDebounce } from "../hooks/useDebounce"
-import { useList } from "../hooks/useGenericCrud"
+import { useList, useCreate } from "../hooks/useGenericCrud"
 import type { Usuario } from "../types/schema.types"
+
+const cleanObject = (obj: any): any => {
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanObject(item)).filter(item =>
+      item !== null && item !== undefined &&
+      !(typeof item === 'object' && Object.keys(item).length === 0)
+    )
+  } else if (obj && typeof obj === 'object') {
+    const cleaned: any = {}
+    for (const [key, value] of Object.entries(obj)) {
+      const cleanedValue = cleanObject(value)
+      // Solo incluir si el valor no es null/undefined y no es un objeto vacío
+      if (cleanedValue !== null &&
+        cleanedValue !== undefined &&
+        !(typeof cleanedValue === 'object' && Object.keys(cleanedValue).length === 0)) {
+        cleaned[key] = cleanedValue
+      }
+    }
+    return Object.keys(cleaned).length > 0 ? cleaned : undefined
+  }
+  return obj
+}
 
 
 export function ValoracionesCrear() {
@@ -214,6 +236,7 @@ export function ValoracionesCrear() {
     antecedentesFamiliares: false
   })
 
+  const { mutate: createValoracion, isPending } = useCreate<any, any>("valoracion")
 
   const handleSelectUsuario = (usuario: Usuario) => {
     setSelectedUsuario(usuario)
@@ -421,17 +444,198 @@ export function ValoracionesCrear() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!formData.nombres || !formData.apellidos) {
-      toast.error("Por favor complete los campos obligatorios")
+    if (!formData.nombres || !formData.apellidos || !selectedUsuario) {
+      toast.error("Por favor seleccione un usuario y complete los campos obligatorios")
+      return
+    }
+
+    if (isPending) {
       return
     }
 
     try {
+      const valoracionData = {
+        val_recomendacion: formData.observaciones || "Sin observaciones",
+        val_prox_control: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        usu_difk: selectedUsuario.usu_di,
+      }
 
-      toast.success("Valoración guardada exitosamente")
-      navigate('/valoraciones/ver')
+      const antropometriaData: any = {}
+      if (formData.peso) antropometriaData.ant_peso = parseFloat(formData.peso)
+      if (formData.talla) antropometriaData.ant_talla = parseFloat(formData.talla)
+      if (formData.grasaCorporal) antropometriaData.ant_grasa_corporal = parseFloat(formData.grasaCorporal)
+      if (formData.grasaVisceral) antropometriaData.ant_grasa_viceral = parseFloat(formData.grasaVisceral)
+      if (formData.kcal) antropometriaData.ant_calorias = parseInt(formData.kcal)
+      if (formData.porcentajeMuscular) antropometriaData.ant_procentaje_muscular = parseFloat(formData.porcentajeMuscular)
+      if (tiposPeso) antropometriaData.ant_nivel_obesidad = tiposPeso
+      if (formData.edadMetabolica) antropometriaData.ant_edad_metabolica = formData.edadMetabolica
+      if (formData.riesgoCardiovascular) antropometriaData.ant_riesgo_cardiaco = formData.riesgoCardiovascular
+      if (tipoObesidad) antropometriaData.ant_tipo_obesidad = tipoObesidad
+      if (formData.rca) antropometriaData.ant_rca = formData.rca
+
+      // 3. Preparar datos físicos - solo campos con valores
+      const datosFisicosData: any = {}
+      if (formData.fc) {
+        const fc = parseInt(formData.fc)
+        if (fc > 0) {
+          datosFisicosData.dat_fc = fc
+          datosFisicosData.dat_fmax = fc
+        }
+      }
+      if (formData.fr && formData.fr !== "0") datosFisicosData.dat_fr = formData.fr
+      if (formData.ta && formData.ta !== "0/0") datosFisicosData.dat_ta = formData.ta
+
+      // 4. Preparar entrenamiento y objetivo - solo campos con valores
+      const objetivoData: any = {}
+      if (formData.objetivoPeso) objetivoData.obj_peso_saludable = formData.objetivoPeso
+      if (formData.objetivoSalud) objetivoData.obj_salud = formData.objetivoSalud
+      if (formData.objetivoGraso) objetivoData.obj_disminucion_grasa = formData.objetivoGraso
+      if (formData.objetivoAcondicionamiento) objetivoData.obj_acon_fisico = formData.objetivoAcondicionamiento
+      if (formData.objetivoFisico) objetivoData.obj_fitness = formData.objetivoFisico
+      if (formData.objetivoMuscular) objetivoData.obj_desarrollo_muscular = formData.objetivoMuscular
+
+      const entrenamientoData: any = {}
+      if (formData.frecuenciaSemanal) entrenamientoData.ent_frecuencia_semanal = formData.frecuenciaSemanal
+      if (formData.nivelEntrenamiento) entrenamientoData.ent_nivel_entrenamiento = formData.nivelEntrenamiento
+      if (Object.keys(objetivoData).length > 0) {
+        entrenamientoData.objetivo = objetivoData
+      }
+
+      // 5. Preparar pregunta_factor_valoracion - solo si hay respuesta o observación
+      const preguntaFactorValoracionData = [
+        {
+          paf_idfk: 1,
+          pfv_respuesta: formData.cardiovascular,
+          pfv_observacion: formData.cardiovascularDetalle || undefined,
+        },
+        {
+          paf_idfk: 2,
+          pfv_respuesta: formData.osteomuscular,
+          pfv_observacion: formData.osteomuscularDetalle || undefined,
+        },
+        {
+          paf_idfk: 3,
+          pfv_respuesta: formData.metabolico,
+          pfv_observacion: formData.metabolicoDetalle || undefined,
+        },
+        {
+          paf_idfk: 4,
+          pfv_respuesta: formData.otrosFactores,
+          pfv_observacion: formData.otrosFactoresDetalle || undefined,
+        },
+        {
+          paf_idfk: 5,
+          pfv_respuesta: formData.antecedentesMedicos,
+          pfv_observacion: formData.antecedentesMedicosDetalle || undefined,
+        },
+        {
+          paf_idfk: 6,
+          pfv_respuesta: formData.antecedentesFamiliares,
+          pfv_observacion: formData.antecedentesFamiliaresDetalle || undefined,
+        },
+      ].filter(item => item.pfv_respuesta || item.pfv_observacion)
+        .map(item => ({
+          paf_idfk: item.paf_idfk,
+          pfv_respuesta: item.pfv_respuesta,
+          ...(item.pfv_observacion && { pfv_observacion: item.pfv_observacion })
+        }))
+
+      // 6. Preparar respuesta_cuestionario_fisico - solo si hay texto
+      const respuestaCuestionarioData = [
+        {
+          pre_idfk: 4,
+          ...(formData.ejercicioAnteriorDetalle && { res_texto_libre: formData.ejercicioAnteriorDetalle }),
+        },
+        {
+          pre_idfk: 9,
+          ...(formData.actividadActualDetalle && { res_texto_libre: formData.actividadActualDetalle }),
+        },
+        {
+          pre_idfk: 7,
+          ...(formData.sedentarioDetalle && { res_texto_libre: formData.sedentarioDetalle }),
+        },
+        {
+          pre_idfk: 10,
+          ...(formData.frecuenciaDetalle && { res_texto_libre: formData.frecuenciaDetalle }),
+        },
+      ].filter(item => Object.keys(item).length > 1) // Filtra objetos que solo tienen pre_idfk
+
+      // 7. Preparar mediciones_parte - solo si hay medición diferente de "0"
+      const medicionesParteData = [
+        { par_idfk: 1, med_medida: formData.brazo0 },
+        { par_idfk: 9, med_medida: formData.pierna0 },
+        { par_idfk: 6, med_medida: formData.abdomen0 },
+        { par_idfk: 11, med_medida: formData.hombros0 },
+        { par_idfk: 4, med_medida: formData.cintura0 },
+        { par_idfk: 2, med_medida: formData.brazo1 },
+        { par_idfk: 10, med_medida: formData.pierna1 },
+        { par_idfk: 5, med_medida: formData.cadera },
+        { par_idfk: 3, med_medida: formData.pecho },
+        { par_idfk: 7, med_medida: formData.muslo },
+        { par_idfk: 8, med_medida: formData.muslo },
+        { par_idfk: 13, med_medida: formData.pantorrilla },
+      ]
+        .filter(item => item.med_medida && item.med_medida.trim() !== "" && item.med_medida !== "0")
+        .map(item => ({
+          par_idfk: item.par_idfk,
+          med_medida: item.med_medida.trim()
+        }))
+
+      // 8. Construir payload final - solo incluir objetos que tengan datos
+      const payload: any = {
+        ...valoracionData,
+      }
+
+      // Solo añadir objetos que tengan propiedades
+      if (Object.keys(antropometriaData).length > 0) {
+        payload.antropometria = antropometriaData
+      }
+
+      if (Object.keys(datosFisicosData).length > 0) {
+        payload.datos_fisicos = datosFisicosData
+      }
+
+      if (Object.keys(entrenamientoData).length > 0) {
+        payload.entrenamiento = entrenamientoData
+      }
+
+      if (preguntaFactorValoracionData.length > 0) {
+        payload.pregunta_factor_valoracion = preguntaFactorValoracionData
+      }
+
+      if (respuestaCuestionarioData.length > 0) {
+        payload.respuesta_cuestionario_fisico = respuestaCuestionarioData
+      }
+
+      if (medicionesParteData.length > 0) {
+        payload.medicion_parte = medicionesParteData
+      }
+
+      console.log("Payload final a enviar:", JSON.stringify(payload, null, 2))
+
+      // Validar que hay más datos que solo los básicos
+      const basicFields = ['val_recomendacion', 'val_prox_control', 'usu_difk', 'eliminado']
+      const hasAdditionalData = Object.keys(payload).some(key => !basicFields.includes(key))
+
+      if (!hasAdditionalData) {
+        toast.error("Por favor complete al menos algunos datos de la valoración")
+        return
+      }
+
+      // 9. Enviar petición POST
+      createValoracion(payload, {
+        onSuccess: (response) => {
+          toast.success("Valoración guardada exitosamente")
+          navigate('/valoraciones/ver')
+        },
+        onError: (error) => {
+          console.error("Error al guardar:", error)
+          toast.error("Error al guardar la valoración: " + (error.message || "Error desconocido"))
+        }
+      })
     } catch (error) {
-      toast.error("Error al guardar la valoración")
+      console.error("Error inesperado:", error)
+      toast.error("Error inesperado al procesar la valoración")
     }
   }
 
