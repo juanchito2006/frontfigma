@@ -1046,6 +1046,60 @@ export function ValoracionesCrear() {
             </div>
           </div>
 
+          {/* Programa de entrenamiento */}
+          <div className="border rounded-md mt-6">
+            <div className="bg-green-700 text-white p-3 rounded-t-lg">
+              <h2 className="text-lg">Observaciones</h2>
+            </div>
+
+            <Accordion type="single" collapsible className="w-full">
+              {[1, 2, 3, 4, 5].map((dia, index) => (
+                <AccordionItem key={index} value={`dia-${dia}`}>
+                  <div className="flex items-center justify-between bg-gray-200 px-4">
+                    <AccordionTrigger className="font-medium">Día {dia}</AccordionTrigger>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800">
+                      <Trash2 className="w-5 h-5" />
+                    </Button>
+                  </div>
+
+                  <AccordionContent className="p-4 space-y-4">
+                    {/* Buscador */}
+                    <div className="flex items-center gap-2">
+                      <Search className="text-green-700" />
+                      <Input placeholder="Seleccionar ejercicio" />
+                    </div>
+
+                    {/* Lista de ejercicios */}
+                    <div className="space-y-2">
+                      {["Sentadillas", "Sentadillas", "Sentadillas"].map((ej, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center justify-between border rounded px-2 py-1"
+                        >
+                          <div className="flex items-center gap-2">
+                            <GripVertical className="text-gray-500 cursor-move" />
+                            <span>{ej}</span>
+                          </div>
+                          <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-800">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+
+            {/* Botón agregar día */}
+            <div className="p-4">
+              <Button className="flex items-center gap-2 bg-gray-800 text-white hover:bg-gray-700">
+                <PlusCircle className="w-4 h-4" />
+                Día
+              </Button>
+            </div>
+          </div>
+
           {/* Observaciones */}
           <div>
             <div className="bg-green-700 text-white p-3 rounded-t-lg">
