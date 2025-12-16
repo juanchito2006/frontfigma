@@ -32,11 +32,11 @@
             "@tanstack/react-query": "^5.90.11",
             "@tanstack/react-query-devtools": "^5.91.1",
             "class-variance-authority": "^0.7.1",
-            "clsx": "*",
+            "clsx": "^2.1.1",
             "cmdk": "*",
             "embla-carousel-react": "*",
             "input-otp": "*",
-            "lucide-react": "*",
+            "lucide-react": "^0.561.0",
             "next-themes": "*",
             "react": "^18.3.1",
             "react-day-picker": "*",
@@ -48,7 +48,7 @@
             "react-router-dom": "*",
             "recharts": "*",
             "sonner": "*",
-            "tailwind-merge": "*",
+            "tailwind-merge": "^3.4.0",
             "vaul": "^1.1.2"
       },
       "devDependencies": {
