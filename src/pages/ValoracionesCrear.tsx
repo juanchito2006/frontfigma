@@ -977,30 +977,20 @@ export function ValoracionesCrear() {
                   {/* Tipo de peso - Radio buttons */}
                   <div className="space-y-2">
                     <Label className="font-medium">Tipo de peso</Label>
-                    <RadioGroup
-                      value={tiposPeso}
-                      onValueChange={setTiposPeso}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="bajopeso" id="bajopeso" />
-                        <Label htmlFor="bajopeso">Bajopeso</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="normal" id="normal" />
-                        <Label htmlFor="normal">Normal</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="sobrepeso" id="sobrepeso" />
-                        <Label htmlFor="sobrepeso">Sobrepeso</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="obesidad" id="obesidad" />
-                        <Label htmlFor="obesidad">Obesidad</Label>
-                      </div>
-                    </RadioGroup>
+                    <Select value={tiposPeso} onValueChange={setTiposPeso}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione tipo de peso" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="bajopeso">Bajopeso</SelectItem>
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="sobrepeso">Sobrepeso</SelectItem>
+                        <SelectItem value="obesidad">Obesidad</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
+
 
                 {/* Columna 2 */}
                 <div className="space-y-3">
@@ -1075,20 +1065,15 @@ export function ValoracionesCrear() {
                   {/* Tipo de Obesidad */}
                   <div className="space-y-2">
                     <Label className="font-medium">Tipo de Obesidad</Label>
-                    <RadioGroup
-                      value={tipoObesidad}
-                      onValueChange={setTipoObesidad}
-                      className="space-y-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="cinoide" id="cinoide" />
-                        <Label htmlFor="cinoide">Cinoide</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="androide" id="androide" />
-                        <Label htmlFor="androide">Androide</Label>
-                      </div>
-                    </RadioGroup>
+                    <Select value={tipoObesidad} onValueChange={setTipoObesidad}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione tipo de obesidad" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cinoide">Cinoide</SelectItem>
+                        <SelectItem value="androide">Androide</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* RCA */}
@@ -1264,35 +1249,28 @@ export function ValoracionesCrear() {
               <h2 className="text-lg">Entrenamiento</h2>
             </div>
             <div className="bg-white border border-gray-200 rounded-b-lg p-4">
+              <div className="mb-4">
+                <Label className="font-semibold text-gray-700 mb-3 block">Nivel Entrenamiento</Label>
+                <Select
+                  value={formData.nivelEntrenamiento}
+                  onValueChange={(value) => handleInputChange('nivelEntrenamiento', value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccione nivel" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="inicial">Inicial</SelectItem>
+                    <SelectItem value="intermedio">Intermedio</SelectItem>
+                    <SelectItem value="avanzado">Avanzado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 
                 {/* Columna 1 - Nivel de Entrenamiento y Objetivos */}
-                <div className="space-y-6">
+                <div className="lg:col-span-3 space-y-6">
                   {/* Nivel de Entrenamiento */}
-                  <div>
-                    <Label className="font-semibold text-gray-700 mb-3 block">Nivel Entrenamiento</Label>
-                    <div className="border rounded-lg p-4">
-                      <RadioGroup
-                        value={formData.nivelEntrenamiento}
-                        onValueChange={(value) => handleInputChange('nivelEntrenamiento', value)}
-                        className="grid grid-cols-3 gap-2 text-center"
-                      >
-                        <div className="flex flex-col items-center space-y-2">
-                          <div className="text-sm font-medium">Inicial</div>
-                          <RadioGroupItem value="inicial" id="inicial" />
-                        </div>
-                        <div className="flex flex-col items-center space-y-2">
-                          <div className="text-sm font-medium">Intermedio</div>
-                          <RadioGroupItem value="intermedio" id="intermedio" />
-                        </div>
-                        <div className="flex flex-col items-center space-y-2">
-                          <div className="text-sm font-medium">Avanzado</div>
-                          <RadioGroupItem value="avanzado" id="avanzado" />
-                        </div>
-                      </RadioGroup>
-                    </div>
-                  </div>
-
                   {/* Frecuencia Semanal - Ahora como Select */}
                   <div>
                     <Label className="font-semibold text-gray-700 mb-3 block">Frecuencia Semanal</Label>
@@ -1384,7 +1362,7 @@ export function ValoracionesCrear() {
                 </div>
 
                 {/* Columna 2 - Entrenamiento Cruzado */}
-                <div>
+                <div className="p-4">
                   <Label className="font-semibold text-gray-700 mb-3 block">Entrenamiento Cruzado</Label>
                   <div className="space-y-2">
                     {[
