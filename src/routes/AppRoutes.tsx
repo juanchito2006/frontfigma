@@ -33,6 +33,7 @@ import {
   ValoracionesVer,
   ValoracionDetalle,
   ValoracionEditar,
+  ValoracionVisualizarCompleta,
   EjerciciosCrear,
   EjerciciosVer,
   EjercicioEditar,   // 👈 AÑADIR ESTO
@@ -74,12 +75,14 @@ export function AppRoutes() {
         - /valoraciones/crear - Formulario de creación de valoración
         - /valoraciones/ver - Lista de valoraciones con búsqueda
         - /valoraciones/:id - Detalle completo de valoración (solo lectura)
+        - /valoraciones/:id/ver - Visualizar valoración completa con diseño de crear
         - /valoraciones/:id/editar - Formulario de edición de valoración
       */}
       <Route path="/valoraciones">
         <Route path="crear" element={<ValoracionesCrear />} />
         <Route path="ver" element={<ValoracionesVer />} />
         <Route path=":id" element={<ValoracionDetalle />} />
+        <Route path=":id/ver" element={<ValoracionVisualizarCompleta />} />
         <Route path=":id/editar" element={<ValoracionEditar />} />
       </Route>
 

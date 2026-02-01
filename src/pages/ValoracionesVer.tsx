@@ -315,8 +315,8 @@ export function ValoracionesVer() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/valoraciones/${valoracion.val_id}`)}
-                            title="Ver detalle"
+                            onClick={() => navigate(`/valoraciones/${valoracion.val_id}/ver`)}
+                            title="Ver detalle completo"
                             className="h-8 w-8"
                           >
                             <Eye className="h-4 w-4" />

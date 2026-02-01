@@ -1606,7 +1606,6 @@ export function ValoracionesCrear() {
           </div>
 
           {/* Programa de entrenamiento */}
-          {/* Programa de entrenamiento */}
           <div className="space-y-4">
             <div className="flex items-center justify-between bg-green-700 text-white p-3 rounded-lg">
               <h2 className="text-lg">Programas de Entrenamiento</h2>
