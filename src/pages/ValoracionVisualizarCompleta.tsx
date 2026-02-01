@@ -920,9 +920,8 @@ export function ValoracionVisualizarCompleta() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Columna 1 */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-gray-700 border-b pb-2">Muito 0</h3>
                 <div>
-                  <Label className="mb-4" htmlFor="brazo0">Brazo 0</Label>
+                  <Label className="mb-4" htmlFor="brazo0">Brazo D</Label>
                   <Input
                     id="brazo0"
                     type="number"
@@ -932,7 +931,7 @@ export function ValoracionVisualizarCompleta() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="pierna0">Pierna 0</Label>
+                  <Label className="mb-4" htmlFor="pierna0">Pierna D</Label>
                   <Input
                     id="pierna0"
                     type="number"
@@ -942,7 +941,7 @@ export function ValoracionVisualizarCompleta() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="abdomen0">Abdomen 0</Label>
+                  <Label className="mb-4" htmlFor="abdomen0">Abdomen</Label>
                   <Input
                     id="abdomen0"
                     type="number"
@@ -952,7 +951,7 @@ export function ValoracionVisualizarCompleta() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="hombros0">Hombros 0</Label>
+                  <Label className="mb-4" htmlFor="hombros0">Hombros</Label>
                   <Input
                     id="hombros0"
                     type="number"
@@ -962,7 +961,7 @@ export function ValoracionVisualizarCompleta() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="cintura0">Cintura 0</Label>
+                  <Label className="mb-4" htmlFor="cintura0">Cintura</Label>
                   <Input
                     id="cintura0"
                     type="number"
@@ -975,9 +974,8 @@ export function ValoracionVisualizarCompleta() {
 
               {/* Columna 2 */}
               <div className="space-y-3">
-                <h3 className="font-semibold text-gray-700 border-b pb-2">Muito 1</h3>
                 <div>
-                  <Label className="mb-4" htmlFor="brazo1">Brazo 1</Label>
+                  <Label className="mb-4" htmlFor="brazo1">Brazo L</Label>
                   <Input
                     id="brazo1"
                     type="number"
@@ -987,7 +985,7 @@ export function ValoracionVisualizarCompleta() {
                   />
                 </div>
                 <div>
-                  <Label className="mb-4" htmlFor="pierna1">Pierna 1</Label>
+                  <Label className="mb-4" htmlFor="pierna1">Pierna L</Label>
                   <Input
                     id="pierna1"
                     type="number"
@@ -1016,11 +1014,6 @@ export function ValoracionVisualizarCompleta() {
                     className="bg-gray-100 cursor-not-allowed"
                   />
                 </div>
-              </div>
-
-              {/* Columna 3 */}
-              <div className="space-y-3">
-                <h3 className="font-semibold text-gray-700 border-b pb-2">Otras Mediciones</h3>
                 <div>
                   <Label className="mb-4" htmlFor="cintura">Cintura</Label>
                   <Input
@@ -1031,6 +1024,11 @@ export function ValoracionVisualizarCompleta() {
                     className="bg-gray-100 cursor-not-allowed"
                   />
                 </div>
+              </div>
+
+              {/* Columna 3 */}
+              <div className="space-y-3">
+                
                 <div>
                   <Label className="mb-4" htmlFor="muslo">Muslo</Label>
                   <Input
@@ -1151,7 +1149,7 @@ export function ValoracionVisualizarCompleta() {
               </div>
 
               {/* Columna 2 */}
-              <div className="p-4 border rounded-lg">
+              <div className="p-4">
                 <Label className="font-semibold text-gray-700 mb-3 block">Entrenamiento Cruzado</Label>
                 <div className="space-y-2">
                   {[
