@@ -24,19 +24,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Credenciales de administrador
-  const ADMIN_CREDENTIALS = {
-    email: "admin",
-    password: "admin123",
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     setIsLoading(true);
 
-    // Simular delay de autenticación
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     try {
@@ -49,18 +42,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     } catch (err) {
       setError("Credenciales incorrectas");
     }
-
-    // if (
-    //   email === ADMIN_CREDENTIALS.email &&
-    //   password === ADMIN_CREDENTIALS.password
-    // ) {
-    //   // Guardar sesión en localStorage
-    //   localStorage.setItem("isAuthenticated", "true");
-    //   localStorage.setItem("loginTime", Date.now().toString());
-    //   onLogin();
-    // } else {
-    //   setError("Usuario o contraseña incorrectos");
-    // }
 
     setIsLoading(false);
   };
