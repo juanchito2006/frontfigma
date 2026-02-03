@@ -6,7 +6,9 @@ export class ApiClient {
   }
 
   async get<T>(endpoint: string): Promise<T> {
-    const res = await fetch(`${this.baseURL}${endpoint}`);
+    const res = await fetch(`${this.baseURL}${endpoint}`, {
+      credentials: "include",
+    });
     if (!res.ok) throw new Error(`Error ${res.status}`);
     return res.json();
   }
@@ -14,6 +16,7 @@ export class ApiClient {
   async post<T>(endpoint: string, data: unknown): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -25,6 +28,7 @@ export class ApiClient {
   async patch<T>(endpoint: string, data: unknown): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "PATCH",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -34,20 +38,21 @@ export class ApiClient {
   }
 
   // 🔥 DELETE SIN response.json()
-async delete(endpoint: string): Promise<void> {
-  const response = await fetch(`${this.baseURL}${endpoint}`, {
-    method: 'DELETE',
-  });
+  async delete(endpoint: string): Promise<void> {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
 
-  if (!response.ok) {
-    throw new Error(`Error ${response.status}: ${response.statusText}`);
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    }
+
+    // ⚠️ NO intentar response.json()
+    return;
   }
-
-  // ⚠️ NO intentar response.json()
-  return;
 }
 
-}
-
-export const apiClient = new ApiClient( 'https://gym-combarranquilla-api.leapcell.app');
-
+export const apiClient = new ApiClient(
+  "https://gym-combarranquilla-api.leapcell.app",
+);

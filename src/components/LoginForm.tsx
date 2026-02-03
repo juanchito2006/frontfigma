@@ -1,48 +1,69 @@
-import { useState } from "react"
-import { Button } from "./ui/button"
-import { Input } from "./ui/input"
-import { Label } from "./ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card"
-import { Alert, AlertDescription } from "./ui/alert"
-import { Eye, EyeOff, Lock, User } from "lucide-react"
+import { useState } from "react";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import { Alert, AlertDescription } from "./ui/alert";
+import { Eye, EyeOff, Lock, AtSign } from "lucide-react";
+import { apiClient, ApiClient } from "../lib/api-client";
 
 interface LoginFormProps {
-  onLogin: () => void
+  onLogin: () => void;
 }
 
 export function LoginForm({ onLogin }: LoginFormProps) {
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   // Credenciales de administrador
   const ADMIN_CREDENTIALS = {
-    username: "admin",
-    password: "admin123"
-  }
+    email: "admin",
+    password: "admin123",
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
+    e.preventDefault();
+    setError("");
 
-    setIsLoading(true)
+    setIsLoading(true);
 
     // Simular delay de autenticación
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      // Guardar sesión en localStorage
-      localStorage.setItem("isAuthenticated", "true")
-      localStorage.setItem("loginTime", Date.now().toString())
-      onLogin()
-    } else {
-      setError("Usuario o contraseña incorrectos")
+    try {
+      const response = await apiClient.post("/auth/login", {
+        email,
+        password,
+      });
+
+      onLogin();
+    } catch (err) {
+      setError("Credenciales incorrectas");
     }
 
-    setIsLoading(false)
-  }
+    // if (
+    //   email === ADMIN_CREDENTIALS.email &&
+    //   password === ADMIN_CREDENTIALS.password
+    // ) {
+    //   // Guardar sesión en localStorage
+    //   localStorage.setItem("isAuthenticated", "true");
+    //   localStorage.setItem("loginTime", Date.now().toString());
+    //   onLogin();
+    // } else {
+    //   setError("Usuario o contraseña incorrectos");
+    // }
+
+    setIsLoading(false);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-green-100 p-4">
@@ -63,21 +84,21 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="username">Usuario</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <AtSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input
-                  id="username"
+                  id="email"
                   type="text"
-                  placeholder="Ingrese su usuario"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Ingrese su email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
                   required
                 />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Contraseña</Label>
               <div className="relative">
@@ -96,7 +117,11 @@ export function LoginForm({ onLogin }: LoginFormProps) {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -107,8 +132,8 @@ export function LoginForm({ onLogin }: LoginFormProps) {
               </Alert>
             )}
 
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="w-full bg-green-600 hover:bg-green-700"
               disabled={isLoading}
             >
@@ -117,21 +142,27 @@ export function LoginForm({ onLogin }: LoginFormProps) {
           </form>
 
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Credenciales de prueba:</h4>
+            <h4 className="text-sm font-medium text-gray-700 mb-2">
+              Credenciales de prueba:
+            </h4>
             <div className="text-sm text-gray-600 space-y-1">
-              <p><strong>Usuario:</strong> admin</p>
-              <p><strong>Contraseña:</strong> admin123</p>
+              <p>
+                <strong>Email:</strong> admin@example.com
+              </p>
+              <p>
+                <strong>Contraseña:</strong> admin123
+              </p>
             </div>
           </div>
 
           {/* Footer minimalista */}
           <div className="mt-6 text-center">
-            <p 
-              className="text-[#dcdcdc]" 
-              style={{ 
-                fontSize: '13px', 
-                fontFamily: 'sans-serif',
-                letterSpacing: '0.3px'
+            <p
+              className="text-[#dcdcdc]"
+              style={{
+                fontSize: "13px",
+                fontFamily: "sans-serif",
+                letterSpacing: "0.3px",
               }}
             >
               © 2025 — Todos los derechos reservados
@@ -140,5 +171,5 @@ export function LoginForm({ onLogin }: LoginFormProps) {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
