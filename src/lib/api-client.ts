@@ -5,51 +5,83 @@ export class ApiClient {
     this.baseURL = baseURL;
   }
 
+  // 🔐 Obtiene JWT
+  private getToken(): string | null {
+    return localStorage.getItem("access_token");
+  }
+
+  // 🧠 Headers con Authorization automático
+  private getHeaders(extraHeaders: HeadersInit = {}): HeadersInit {
+    const token = this.getToken();
+
+    return {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...extraHeaders,
+    };
+  }
+
+  private async handleResponse<T>(res: Response): Promise<T> {
+    // Token inválido / expirado
+    if (res.status === 401) {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+      throw new Error("Unauthorized");
+    }
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      throw new Error(error?.message || `Error ${res.status}`);
+    }
+
+    return res.json();
+  }
+
   async get<T>(endpoint: string): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
-      credentials: "include",
+      method: "GET",
+      headers: this.getHeaders(),
     });
-    if (!res.ok) throw new Error(`Error ${res.status}`);
-    return res.json();
+
+    return this.handleResponse<T>(res);
   }
 
   async post<T>(endpoint: string, data: unknown): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "POST",
-
-      headers: { "Content-Type": "application/json" },
+      headers: this.getHeaders(),
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error(`Error ${res.status}`);
-    return res.json();
+    return this.handleResponse<T>(res);
   }
 
   async patch<T>(endpoint: string, data: unknown): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: this.getHeaders(),
       body: JSON.stringify(data),
     });
 
-    if (!res.ok) throw new Error(`Error ${res.status}`);
-    return res.json();
+    return this.handleResponse<T>(res);
   }
 
-  // 🔥 DELETE SIN response.json()
+  // 🔥 DELETE sin body
   async delete(endpoint: string): Promise<void> {
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
+    const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "DELETE",
-      credentials: "include",
+      headers: this.getHeaders(),
     });
 
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+    if (res.status === 401) {
+      localStorage.removeItem("access_token");
+      window.location.href = "/login";
+      return;
     }
 
-    // ⚠️ NO intentar response.json()
-    return;
+    if (!res.ok) {
+      throw new Error(`Error ${res.status}: ${res.statusText}`);
+    }
   }
 }
 

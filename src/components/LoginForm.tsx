@@ -31,11 +31,12 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      const response = await apiClient.post("/auth/login", {
+      const response: any = await apiClient.post("/auth/login", {
         email,
         password,
       });
 
+      localStorage.setItem("access_token", response.data.accessToken);
       onLogin();
     } catch (err) {
       setError("Credenciales incorrectas");
