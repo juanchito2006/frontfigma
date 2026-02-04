@@ -37,6 +37,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
       });
 
       localStorage.setItem("access_token", response.data.accessToken);
+      console.log(response.data.accessToken);
       onLogin();
     } catch (err) {
       setError("Credenciales incorrectas");
