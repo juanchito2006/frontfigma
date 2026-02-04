@@ -16,7 +16,7 @@ export class ApiClient {
   async post<T>(endpoint: string, data: unknown): Promise<T> {
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "POST",
-      credentials: "include",
+
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
