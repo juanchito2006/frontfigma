@@ -30,8 +30,6 @@ export function LoginForm({ onLogin }: LoginFormProps) {
 
     setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
     try {
       const response = await apiClient.post("/auth/login", {
         email,
