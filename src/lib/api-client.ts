@@ -131,4 +131,6 @@ export class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient("https://combarranquillagy.netlify.app");
+export const apiClient = new ApiClient(
+  "https://gym-combarranquilla-api.leapcell.app",
+);
