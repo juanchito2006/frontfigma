@@ -17,6 +17,15 @@ interface LoginFormProps {
   onLogin: () => void;
 }
 
+interface LoginResponse {
+  accessToken: string;
+  user: {
+    id: number;
+    email: string;
+    nombre: string;
+  };
+}
+
 export function LoginForm({ onLogin }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +40,7 @@ export function LoginForm({ onLogin }: LoginFormProps) {
     setIsLoading(true);
 
     try {
-      const response: any = await apiClient.post("/auth/login", {
+      const response: any = await apiClient.post<LoginResponse>("/auth/login", {
         email,
         password,
       });
