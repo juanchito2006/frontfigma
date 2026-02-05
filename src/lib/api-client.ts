@@ -1,32 +1,74 @@
 export class ApiClient {
   private baseURL: string;
+  private isRefreshing = false;
+  private refreshPromise: Promise<void> | null = null;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;
   }
 
-  // 🔐 Obtiene JWT
+  // Access token (solo frontend)
   private getToken(): string | null {
     return localStorage.getItem("access_token");
   }
 
-  // 🧠 Headers con Authorization automático
-  private getHeaders(extraHeaders: HeadersInit = {}): HeadersInit {
+  private setToken(token: string) {
+    localStorage.setItem("access_token", token);
+  }
+
+  private clearToken() {
+    localStorage.removeItem("access_token");
+  }
+
+  // Headers automáticos
+  private getHeaders(extra: HeadersInit = {}): HeadersInit {
     const token = this.getToken();
 
     return {
       "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
-      ...extraHeaders,
+      ...extra,
     };
   }
 
-  private async handleResponse<T>(res: Response): Promise<T> {
-    // Token inválido / expirado
+  // REFRESH TOKEN (cookie httpOnly)
+  private async refreshToken(): Promise<void> {
+    if (this.isRefreshing) {
+      return this.refreshPromise!;
+    }
+
+    this.isRefreshing = true;
+
+    this.refreshPromise = fetch(`${this.baseURL}/auth/refresh`, {
+      method: "POST",
+      credentials: "include", // cookie
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error("Refresh failed");
+
+        const data = await res.json();
+        this.setToken(data.accessToken);
+      })
+      .catch(() => {
+        this.clearToken();
+        window.location.href = "/login";
+        throw new Error("Session expired");
+      })
+      .finally(() => {
+        this.isRefreshing = false;
+        this.refreshPromise = null;
+      });
+
+    return this.refreshPromise;
+  }
+
+  private async handleResponse<T>(
+    res: Response,
+    retry: () => Promise<T>,
+  ): Promise<T> {
     if (res.status === 401) {
-      localStorage.removeItem("access_token");
-      window.location.href = "/login";
-      throw new Error("Unauthorized");
+      await this.refreshToken();
+      return retry(); // reintenta
     }
 
     if (!res.ok) {
@@ -38,49 +80,54 @@ export class ApiClient {
   }
 
   async get<T>(endpoint: string): Promise<T> {
+    const retry = () => this.get<T>(endpoint);
+
     const res = await fetch(`${this.baseURL}${endpoint}`, {
-      method: "GET",
       headers: this.getHeaders(),
     });
 
-    return this.handleResponse<T>(res);
+    return this.handleResponse(res, retry);
   }
 
   async post<T>(endpoint: string, data: unknown): Promise<T> {
+    const retry = () => this.post<T>(endpoint, data);
+
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "POST",
       headers: this.getHeaders(),
       body: JSON.stringify(data),
     });
 
-    return this.handleResponse<T>(res);
+    return this.handleResponse(res, retry);
   }
 
   async patch<T>(endpoint: string, data: unknown): Promise<T> {
+    const retry = () => this.patch<T>(endpoint, data);
+
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "PATCH",
       headers: this.getHeaders(),
       body: JSON.stringify(data),
     });
 
-    return this.handleResponse<T>(res);
+    return this.handleResponse(res, retry);
   }
 
-  // 🔥 DELETE sin body
   async delete(endpoint: string): Promise<void> {
+    const retry = () => this.delete(endpoint);
+
     const res = await fetch(`${this.baseURL}${endpoint}`, {
       method: "DELETE",
       headers: this.getHeaders(),
     });
 
     if (res.status === 401) {
-      localStorage.removeItem("access_token");
-      window.location.href = "/login";
-      return;
+      await this.refreshToken();
+      return retry();
     }
 
     if (!res.ok) {
-      throw new Error(`Error ${res.status}: ${res.statusText}`);
+      throw new Error(`Error ${res.status}`);
     }
   }
 }
