@@ -1,59 +1,55 @@
+type HttpMethod = "GET" | "POST" | "PATCH" | "DELETE";
+
 export class ApiClient {
-  private baseURL: string;
   private isRefreshing = false;
-  private refreshPromise: Promise<void> | null = null;
+  private refreshPromise: Promise<string | null> | null = null;
 
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
-  }
+  constructor(private readonly baseURL: string) {}
 
-  // Access token (solo frontend)
-  private getToken(): string | null {
+  // 🔐 Access token
+  private get accessToken(): string | null {
     return localStorage.getItem("access_token");
   }
 
-  private setToken(token: string) {
-    localStorage.setItem("access_token", token);
+  private set accessToken(token: string | null) {
+    if (token) {
+      localStorage.setItem("access_token", token);
+    } else {
+      localStorage.removeItem("access_token");
+    }
   }
 
-  private clearToken() {
-    localStorage.removeItem("access_token");
-  }
-
-  // Headers automáticos
-  private getHeaders(extra: HeadersInit = {}): HeadersInit {
-    const token = this.getToken();
-
+  // 🧠 Headers base
+  private buildHeaders(extra?: HeadersInit): HeadersInit {
     return {
       "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(this.accessToken && {
+        Authorization: `Bearer ${this.accessToken}`,
+      }),
       ...extra,
     };
   }
 
-  // REFRESH TOKEN (cookie httpOnly)
-  private async refreshToken(): Promise<void> {
-    if (this.isRefreshing) {
-      return this.refreshPromise!;
+  // 🔁 Refresh token (cookie HttpOnly)
+  private async refreshAccessToken(): Promise<string | null> {
+    if (this.isRefreshing && this.refreshPromise) {
+      return this.refreshPromise;
     }
 
     this.isRefreshing = true;
 
     this.refreshPromise = fetch(`${this.baseURL}/auth/refresh`, {
       method: "POST",
-      credentials: "include", // cookie
+      credentials: "include",
     })
       .then(async (res) => {
-        if (!res.ok) throw new Error("Refresh failed");
+        if (!res.ok) return null;
 
-        const data = await res.json();
-        this.setToken(data.accessToken);
+        const { accessToken } = await res.json();
+        this.accessToken = accessToken;
+        return accessToken;
       })
-      .catch(() => {
-        this.clearToken();
-        window.location.href = "/login";
-        throw new Error("Session expired");
-      })
+      .catch(() => null)
       .finally(() => {
         this.isRefreshing = false;
         this.refreshPromise = null;
@@ -62,13 +58,27 @@ export class ApiClient {
     return this.refreshPromise;
   }
 
+  // 🚪 Logout centralizado
+  private forceLogout(): never {
+    this.accessToken = null;
+    window.location.href = "/login";
+    throw new Error("Session expired");
+  }
+
+  // 🧠 Manejo de respuestas
   private async handleResponse<T>(
     res: Response,
-    retry: () => Promise<T>,
+    retry: () => Promise<Response>,
   ): Promise<T> {
     if (res.status === 401) {
-      await this.refreshToken();
-      return retry(); // reintenta
+      const newToken = await this.refreshAccessToken();
+
+      if (!newToken) {
+        this.forceLogout();
+      }
+
+      const retryRes = await retry();
+      return this.handleResponse<T>(retryRes, retry);
     }
 
     if (!res.ok) {
@@ -79,59 +89,46 @@ export class ApiClient {
     return res.json();
   }
 
-  async get<T>(endpoint: string): Promise<T> {
-    const retry = () => this.get<T>(endpoint);
+  // 🔥 Request genérico
+  private async request<T>(
+    method: HttpMethod,
+    endpoint: string,
+    body?: unknown,
+  ): Promise<T> {
+    const execute = () => {
+      const options: RequestInit = {
+        method,
+        headers: this.buildHeaders(),
+        credentials: "include",
+      };
 
-    const res = await fetch(`${this.baseURL}${endpoint}`, {
-      headers: this.getHeaders(),
-    });
+      if (body !== undefined) {
+        options.body = JSON.stringify(body);
+      }
 
-    return this.handleResponse(res, retry);
+      return fetch(`${this.baseURL}${endpoint}`, options);
+    };
+
+    const res = await execute();
+    return this.handleResponse<T>(res, execute);
   }
 
-  async post<T>(endpoint: string, data: unknown): Promise<T> {
-    const retry = () => this.post<T>(endpoint, data);
-
-    const res = await fetch(`${this.baseURL}${endpoint}`, {
-      method: "POST",
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    return this.handleResponse(res, retry);
+  // 🌐 API pública
+  get<T>(endpoint: string) {
+    return this.request<T>("GET", endpoint);
   }
 
-  async patch<T>(endpoint: string, data: unknown): Promise<T> {
-    const retry = () => this.patch<T>(endpoint, data);
-
-    const res = await fetch(`${this.baseURL}${endpoint}`, {
-      method: "PATCH",
-      headers: this.getHeaders(),
-      body: JSON.stringify(data),
-    });
-
-    return this.handleResponse(res, retry);
+  post<T>(endpoint: string, data: unknown) {
+    return this.request<T>("POST", endpoint, data);
   }
 
-  async delete(endpoint: string): Promise<void> {
-    const retry = () => this.delete(endpoint);
+  patch<T>(endpoint: string, data: unknown) {
+    return this.request<T>("PATCH", endpoint, data);
+  }
 
-    const res = await fetch(`${this.baseURL}${endpoint}`, {
-      method: "DELETE",
-      headers: this.getHeaders(),
-    });
-
-    if (res.status === 401) {
-      await this.refreshToken();
-      return retry();
-    }
-
-    if (!res.ok) {
-      throw new Error(`Error ${res.status}`);
-    }
+  delete(endpoint: string) {
+    return this.request<void>("DELETE", endpoint);
   }
 }
 
-export const apiClient = new ApiClient(
-  "https://gym-combarranquilla-api.leapcell.app",
-);
+export const apiClient = new ApiClient("http://localhost:3030");
