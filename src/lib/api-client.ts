@@ -6,7 +6,7 @@ export class ApiClient {
 
   constructor(private readonly baseURL: string) {}
 
-  // 🔐 Access token
+  // Access token
   private get accessToken(): string | null {
     return localStorage.getItem("access_token");
   }
@@ -19,7 +19,7 @@ export class ApiClient {
     }
   }
 
-  // 🧠 Headers base
+  // Headers base
   private buildHeaders(extra?: HeadersInit): HeadersInit {
     return {
       "Content-Type": "application/json",
@@ -30,7 +30,7 @@ export class ApiClient {
     };
   }
 
-  // 🔁 Refresh token (cookie HttpOnly)
+  // Refresh token (cookie HttpOnly)
   private async refreshAccessToken(): Promise<string | null> {
     if (this.isRefreshing && this.refreshPromise) {
       return this.refreshPromise;
@@ -58,14 +58,14 @@ export class ApiClient {
     return this.refreshPromise;
   }
 
-  // 🚪 Logout centralizado
+  // Logout centralizado
   private forceLogout(): never {
     this.accessToken = null;
     window.location.href = "/login";
     throw new Error("Session expired");
   }
 
-  // 🧠 Manejo de respuestas
+  // Manejo de respuestas
   private async handleResponse<T>(
     res: Response,
     retry: () => Promise<Response>,
@@ -89,7 +89,7 @@ export class ApiClient {
     return res.json();
   }
 
-  // 🔥 Request genérico
+  // Request genérico
   private async request<T>(
     method: HttpMethod,
     endpoint: string,
@@ -113,7 +113,7 @@ export class ApiClient {
     return this.handleResponse<T>(res, execute);
   }
 
-  // 🌐 API pública
+  // API pública
   get<T>(endpoint: string) {
     return this.request<T>("GET", endpoint);
   }
@@ -131,4 +131,4 @@ export class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient("http://localhost:3030");
+export const apiClient = new ApiClient("https://combarranquillagy.netlify.app");
