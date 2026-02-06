@@ -132,5 +132,5 @@ export class ApiClient {
 }
 
 export const apiClient = new ApiClient(
-  "https://gym-combarranquilla-api.leapcell.app",
+  "https://mad-leigh-york-company-fd0936f6.koyeb.app/",
 );
